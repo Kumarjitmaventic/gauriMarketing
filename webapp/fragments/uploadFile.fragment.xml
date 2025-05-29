@@ -1,0 +1,36 @@
+<core:FragmentDefinition xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:u="sap.ui.unified">
+    <Dialog title="File Upload" id="uploadDialog" class = "SapUiMargin" contentWidth="30%" contentHeight="25%">
+        <VBox class='sapUiSmallMarginBegin sapUiSmallMarginTop'>
+            <Label text="Choose a File:" labelFor="file uploader"/>
+            <u:FileUploader id="fileUploader" name="myFileUpload" uploadComplete="handleUploadComplete" change="handleValueChange" multiple="false" />
+        </VBox>
+        <VBox class='sapUiSmallMarginBegin sapUiSmallMarginTop'>
+            <Label text="Select a Doc Type:" labelFor="comboBox"/>
+            <ComboBox id="comboBox1"  selectionChange="onSelectionChange" visible="true" >
+                <items>
+                    <core:Item key="1" text="Offer visual"/>
+                    <core:Item key="2" text="Price list excel file"/>
+                    <core:Item key="3" text="Prize list excel file"/>
+                    <core:Item key="4" text="Prize invoices"/>
+                    <core:Item key="5" text="Coupon design"/>
+                    <core:Item key="6" text="Charge cost center"/>
+                </items>
+            </ComboBox>
+            <ComboBox id="comboBox2"  selectionChange="onSelectionChange" visible="false">
+                <items>
+                    <core:Item key="7" text="Permit copy"/>
+                    <core:Item key="8" text="Payment reciept"/>
+                </items>
+            </ComboBox>
+        </VBox>
+        <beginButton>
+            <Button text="Add" press="onAddFile"/>
+        </beginButton>
+        <endButton>
+
+            <Button text="Close" press="onClose"/>
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,254 @@
+<mvc:View xmlns:upload="sap.m.upload" xmlns:plugins="sap.m.plugins"
+    controllerName="marketingcampaign.zcrmktmarketingcampaign.controller.Home"
+    xmlns:smartForm="sap.ui.comp.smartform"
+    xmlns:smartField="sap.ui.comp.smartfield"
+    height="100%"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:t="sap.ui.table"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:l="sap.ui.layout"
+    xmlns:u="sap.ui.unified"
+    xmlns:ff="sap.f"
+    xmlns="sap.m"
+    xmlns:vm="sap.ui.fl.variants"
+>
+    <Page
+        id="page"
+        title="{i18n>title}"
+    >
+    
+        <f:SimpleForm
+            id="SimpleFormChange354wideDual"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            title="Employe Details"
+            labelSpanXL="4"
+            labelSpanL="4"
+            labelSpanM="12"
+            labelSpanS="12"
+            adjustLabelSpan="false"
+            emptySpanXL="0"
+            emptySpanL="0"
+            emptySpanM="0"
+            emptySpanS="0"
+            columnsXL="2"
+            columnsL="2"
+            columnsM="1"
+            singleContainerFullSize="false"
+        >
+            <f:content>
+                <core:Title
+                    id="_IDGenTitle1"
+                    text=""
+                />
+                <Label
+                    id="_IDGenLabel"
+                    text="Personal No"
+                />
+                <Input
+                    id="name"
+                    value="00104754"
+                    editable="false"
+                />
+                <Label
+                    id="_IDGenLabel1"
+                    text="Designation"
+                />
+                <Input
+                    id="_IDGenInput"
+                    editable="false"
+                    value="Application Operations Ma"
+                />
+
+                <Label
+                    id="_IDGenLabel2"
+                    text="Grade"
+                />
+                <Input
+                    id="_IDGenInput2"
+                    editable="false"
+                    value="Managerial-M2"
+                />
+
+                <Label
+                    id="_IDGenLabel3"
+                    text="Cost Center"
+                />
+                <Input
+                    id="_IDGenInput3"
+                    editable="false"
+                    value="3001010117 IT Dept"
+                />
+                <core:Title
+                    id="_IDGenTitle2"
+                    text=""
+                />
+                <Label
+                    id="_IDGenLabel4"
+                    text="Employee Name"
+                />
+                <Input
+                    id="_IDGenInput4"
+                    editable="false"
+                    value="VINEETHA NANDAKUMAR MENON"
+                />
+                <Label
+                    id="_IDGenLabel5"
+                    text="Department"
+                />
+                <Input
+                    id="_IDGenInput5"
+                    editable="false"
+                    value="Information Technology"
+                />
+                <Label
+                    id="_IDGenLabel6"
+                    text="Company Code"
+                />
+                <Input
+                    id="_IDGenInput6"
+                    editable="false"
+                    value="JMTC Corporate"
+                />
+            </f:content>
+        </f:SimpleForm>
+        <f:SimpleForm
+            id="SimpleFormChange354wideDual2"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            title="Permit Detalis"
+            labelSpanXL="4"
+            labelSpanL="4"
+            labelSpanM="12"
+            labelSpanS="12"
+            adjustLabelSpan="false"
+            emptySpanXL="0"
+            emptySpanL="0"
+            emptySpanM="0"
+            emptySpanS="0"
+            columnsXL="2"
+            columnsL="2"
+            columnsM="1"
+            singleContainerFullSize="false"
+        >
+            <f:content>
+                <Label
+                    id="_IDGenLabel10"
+                    text="Permit Type"
+                />
+                <ComboBox id="_IDGenComboBox">
+                    <items>
+                        <core:Item
+                            id="_IDGenItem1"
+                            key="1"
+                            text="Special Offer"
+                        />
+                        <core:Item
+                            id="_IDGenItem2"
+                            key="2"
+                            text="Raffle Draw"
+                        />
+                        <core:Item
+                            id="_IDGenItem3"
+                            key="3"
+                            text="Scratch &amp; Win"
+                        />
+                        <core:Item
+                            id="_IDGenItem4"
+                            key="4"
+                            text="Sales"
+                        />
+                        <core:Item
+                            id="_IDGenItem5"
+                            key="5"
+                            text="Advertising Stickers"
+                        />
+                    </items>
+                </ComboBox>
+            </f:content>
+        </f:SimpleForm>
+        <f:SimpleForm
+           title="Attachments"
+            singleContainerFullSize="false"
+        >
+            <f:content>
+               
+                <Table id="idProductsTable" mode="MultiSelect"
+		inset="false"
+		items="{docModel>/Document}" showRowCount="10">
+		<headerToolbar>
+    <OverflowToolbar>
+        <content>
+            <ToolbarSpacer /> <!-- Pushes content to the right -->
+            <Button  text="Upload" press="onUploadFiles" />
+            <Button text="Download" press="onDownloadFiles"/>
+            <Button text ="Delete" press="onDeleteFile"/>
+        </content>
+    </OverflowToolbar>
+</headerToolbar>
+		
+		<columns>
+			<Column minScreenWidth="Tablet"
+				demandPopin="true">
+				<Text text="File Name" />
+			</Column>
+			<Column
+				minScreenWidth="Tablet"
+				demandPopin="true">
+				<Text text="Doc Type" />
+			</Column>
+			
+		</columns>
+		<items>
+			<ColumnListItem vAlign="Middle">
+				<cells>
+					
+					<Text
+						text="{docModel>FileName}" />
+					<Text
+						text="{docModel>DocType}" />
+                    
+					
+				</cells>
+			</ColumnListItem>
+		</items>
+	</Table>
+            </f:content>
+            
+        </f:SimpleForm>
+       <f:SimpleForm
+           title="Comments"
+            singleContainerFullSize="true"
+        >
+            <f:content>
+               <TextArea id="commentBox" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." />
+             
+            </f:content>
+            
+        </f:SimpleForm>
+        <footer>
+            <OverflowToolbar id="_IDGenOverflowToolbar">
+                <Bar id="_IDGenBar">
+                    <contentRight>
+                        <Button id="_IDGenButton1"
+                            text="Submit Request"
+                            type="Emphasized"
+                        />
+                        <Button id="_IDGenButton2"
+                            text="Approve Request"
+                            type="Emphasized"
+                            visible="false"
+                        />
+                        <Button id="_IDGenButton3"
+                            text="Cancel"
+                            type="Default"
+                        />
+                    </contentRight>
+                </Bar>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>
