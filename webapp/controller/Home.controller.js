@@ -7,12 +7,12 @@ sap.ui.define([
 
         return Controller.extend("marketingcampaign.zcrmktmarketingcampaign.controller.Home", {
             onInit: function () {
-                debugger
                 const oOwnComp=this.getOwnerComponent();
                 const oDocModel = oOwnComp.getModel("docModel");
                 oDocModel.setProperty("/Document", []);
                 const oModel=oOwnComp.getModel();
                 const oEmpModel=oOwnComp.getModel("empModel");
+                //Fetching the employee detail from the table
                 const sUrl="/UserSet('')"
                 oModel.read(sUrl, {
                     success: function (oData) {
@@ -98,10 +98,11 @@ sap.ui.define([
 
                 var reader = new FileReader();
                 reader.onload = function (e) {
-                    var base64String = e.target.result.split(",")[1];
-                    var mimeType = e.target.result.split(";")[0]
-                    var oModel = this.getView().getModel("docModel");
-                    var oData = {
+                    //Retrieving base 64 and mimetype
+                    const base64String = e.target.result.split(",")[1];
+                    const mimeType = e.target.result.split(";")[0]
+                    const oModel = this.getView().getModel("docModel");
+                    const oData = {
                         FileName: oFile.name,
                         FileContent: base64String,
                         DocType: oComboTxt,
@@ -123,13 +124,14 @@ sap.ui.define([
                 oModel.setProperty("/cmboxid", combTxt);
             },
             downloadDOc: function (base64String, fileName, mimeType) {
-                const byteCharacters = atob(base64String); // Decode Base64
+                // Decode Base64
+                const byteCharacters = atob(base64String); 
                 const byteNumbers = new Array(byteCharacters.length);
 
                 for (let i = 0; i < byteCharacters.length; i++) {
                     byteNumbers[i] = byteCharacters.charCodeAt(i);
                 }
-
+                //converting binary to Blob
                 const byteArray = new Uint8Array(byteNumbers);
                 const blob = new Blob([byteArray], { type: mimeType });
 
@@ -140,8 +142,6 @@ sap.ui.define([
 
                 document.body.appendChild(link);
                 link.click();
-
-                // Cleanup
                 document.body.removeChild(link);
             }
         });
