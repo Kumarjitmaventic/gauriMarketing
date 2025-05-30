@@ -2,22 +2,36 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/m/MessageToast"
 ],
-    function (Controller,MessageToast) {
+    function (Controller, MessageToast) {
         "use strict";
 
         return Controller.extend("marketingcampaign.zcrmktmarketingcampaign.controller.Home", {
             onInit: function () {
-                var oModel = this.getOwnerComponent().getModel("docModel")
-                oModel.setProperty("/Document", [])
+                debugger
+                const oOwnComp=this.getOwnerComponent();
+                const oDocModel = oOwnComp.getModel("docModel");
+                oDocModel.setProperty("/Document", []);
+                const oModel=oOwnComp.getModel();
+                const oEmpModel=oOwnComp.getModel("empModel");
+                const sUrl="/UserSet('')"
+                oModel.read(sUrl, {
+                    success: function (oData) {
+                        oEmpModel.setProperty("/empDetail",oData)
+                    },
+                    error: function (oError) {
+                    }
+                });
             },
             onDownloadFiles(oEvent) {
+                //Fetching selected Items from table
                 var aSelectedItems = this.byId("idProductsTable").getSelectedItems()
-                 if (aSelectedItems.length === 0) {
+                if (aSelectedItems.length === 0) {
                     MessageToast.show("Please select at least one row to delete.");
                     return;
                 }
                 var that = this;
                 var oModel = this.getView().getModel("docModel");
+                //looping through the selected items for downloading each file
                 aSelectedItems.forEach(element => {
                     var sPath = element.getBindingContextPath();
                     var docItem = oModel.getProperty(sPath)
@@ -28,7 +42,7 @@ sap.ui.define([
             onUploadFiles() {
 
                 if (!this._oDialog) {
-                    this._oDialog = sap.ui.xmlfragment(this.getView().getId(),"marketingcampaign.zcrmktmarketingcampaign.fragments.uploadFile", this);
+                    this._oDialog = sap.ui.xmlfragment(this.getView().getId(), "marketingcampaign.zcrmktmarketingcampaign.fragments.uploadFile", this);
                     this.getView().addDependent(this._oDialog);
                 }
                 this._oDialog.open();
@@ -45,19 +59,27 @@ sap.ui.define([
                 oModel.setProperty("/Doc", oEvent.getSource().oFileUpload.files[0])
             },
             onDeleteFile() {
-                var aSelectedItems = this.byId("idProductsTable").getSelectedItems()
+                //Fetching selected Items from table
+                const oTable = this.byId("idProductsTable");
+                const aSelectedItems = oTable.getSelectedItems();
+                oTable.removeSelections()
                 if (aSelectedItems.length === 0) {
                     MessageToast.show("Please select at least one row to delete.");
                     return;
                 }
-                var oModel = this.getView().getModel("docModel");
-                var aDocuments=oModel.getProperty("/Document")
-                aSelectedItems.forEach(element => {
+                const that = this;
+                const oModel = this.getView().getModel("docModel");
+                const aDocuments = oModel.getProperty("/Document");
+                let ind = 0;
+                //looping each Items and removing from model
+                aSelectedItems.forEach((element, ind) => {
                     var sPath = element.getBindingContextPath();
-                    var docId=(sPath.split("/")).slice(-1)[0];
-                    aDocuments.splice(docId,1)
+                    var docId = (sPath.split("/")).slice(-1)[0];
+                    aDocuments.splice(docId - ind, 1);
+                    ind++;
                 });
                 oModel.refresh(true);
+
             },
             onAddFile(oEvent) {
                 var oModel = this.getView().getModel("docModel");
@@ -65,11 +87,11 @@ sap.ui.define([
                 var aDocuments = oModel.getProperty("/Document");
                 var oComboTxt = oModel.getProperty("/cmboxid");
                 var that = this;
-                if (!oFile ) {
+                if (!oFile) {
                     MessageToast.show("Please select a file first.");
                     return;
                 }
-                if (!oComboTxt ) {
+                if (!oComboTxt) {
                     MessageToast.show("Please select a Doc Type.");
                     return;
                 }

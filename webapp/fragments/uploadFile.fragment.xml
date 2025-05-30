@@ -8,7 +8,7 @@
         </VBox>
         <VBox class='sapUiSmallMarginBegin sapUiSmallMarginTop'>
             <Label text="Select a Doc Type:" labelFor="comboBox"/>
-            <ComboBox id="comboBox1"  selectionChange="onSelectionChange" visible="true" >
+            <ComboBox id="comboBox1"  selectionChange="onSelectionChange" visible="{=${empModel>/empDetail/Role}==='Marketing'?true:false}" >
                 <items>
                     <core:Item key="1" text="Offer visual"/>
                     <core:Item key="2" text="Price list excel file"/>
@@ -18,7 +18,7 @@
                     <core:Item key="6" text="Charge cost center"/>
                 </items>
             </ComboBox>
-            <ComboBox id="comboBox2"  selectionChange="onSelectionChange" visible="false">
+            <ComboBox id="comboBox2"  selectionChange="onSelectionChange" visible="{=${empModel>/empDetail/Role}==='Marketing'?false:true}">
                 <items>
                     <core:Item key="7" text="Permit copy"/>
                     <core:Item key="8" text="Payment reciept"/>

@@ -71,6 +71,9 @@
       },
        "docModel": {
         "type": "sap.ui.model.json.JSONModel"
+      },
+       "empModel": {
+        "type": "sap.ui.model.json.JSONModel"
       }
     },
     "resources": {

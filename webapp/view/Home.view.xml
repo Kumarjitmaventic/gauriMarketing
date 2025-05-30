@@ -50,7 +50,7 @@
                 />
                 <Input
                     id="name"
-                    value="00104754"
+                    value="{empModel>/empDetail/Id}"
                     editable="false"
                 />
                 <Label
@@ -60,7 +60,7 @@
                 <Input
                     id="_IDGenInput"
                     editable="false"
-                    value="Application Operations Ma"
+                    value="{empModel>/empDetail/Designation}"
                 />
 
                 <Label
@@ -70,7 +70,7 @@
                 <Input
                     id="_IDGenInput2"
                     editable="false"
-                    value="Managerial-M2"
+                    value="{empModel>/empDetail/Grade}"
                 />
 
                 <Label
@@ -80,7 +80,7 @@
                 <Input
                     id="_IDGenInput3"
                     editable="false"
-                    value="3001010117 IT Dept"
+                    value="{empModel>/empDetail/CostCenter}"
                 />
                 <core:Title
                     id="_IDGenTitle2"
@@ -93,7 +93,7 @@
                 <Input
                     id="_IDGenInput4"
                     editable="false"
-                    value="VINEETHA NANDAKUMAR MENON"
+                    value="{empModel>/empDetail/Name}"
                 />
                 <Label
                     id="_IDGenLabel5"
@@ -102,7 +102,7 @@
                 <Input
                     id="_IDGenInput5"
                     editable="false"
-                    value="Information Technology"
+                    value="{empModel>/empDetail/Department}"
                 />
                 <Label
                     id="_IDGenLabel6"
@@ -111,7 +111,7 @@
                 <Input
                     id="_IDGenInput6"
                     editable="false"
-                    value="JMTC Corporate"
+                    value="{empModel>/empDetail/CompanyCode}"
                 />
             </f:content>
         </f:SimpleForm>
@@ -236,11 +236,12 @@
                         <Button id="_IDGenButton1"
                             text="Submit Request"
                             type="Emphasized"
+                            visible="{=${empModel>/empDetail/Role}==='Marketing'?true:false}"
                         />
                         <Button id="_IDGenButton2"
                             text="Approve Request"
                             type="Emphasized"
-                            visible="false"
+                            visible="{=${empModel>/empDetail/Role}==='Marketing'?false:true}"
                         />
                         <Button id="_IDGenButton3"
                             text="Cancel"
