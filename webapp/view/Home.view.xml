@@ -139,7 +139,7 @@
                     id="_IDGenLabel10"
                     text="Permit Type"
                 />
-                <ComboBox id="_IDGenComboBox">
+                <ComboBox id="_IDGenComboBox" change="onSelectionChange">
                     <items>
                         <core:Item
                             id="_IDGenItem1"
@@ -237,6 +237,7 @@
                             text="Submit Request"
                             type="Emphasized"
                             visible="{=${empModel>/empDetail/Role}==='Marketing'?true:false}"
+                            press="onSubReq"
                         />
                         <Button id="_IDGenButton2"
                             text="Approve Request"
