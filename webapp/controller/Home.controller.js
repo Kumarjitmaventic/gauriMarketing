@@ -7,16 +7,16 @@ sap.ui.define([
 
         return Controller.extend("marketingcampaign.zcrmktmarketingcampaign.controller.Home", {
             onInit: function () {
-                const oOwnComp=this.getOwnerComponent();
+                const oOwnComp = this.getOwnerComponent();
                 const oDocModel = oOwnComp.getModel("docModel");
                 oDocModel.setProperty("/Document", []);
-                const oModel=oOwnComp.getModel();
-                const oEmpModel=oOwnComp.getModel("empModel");
+                const oModel = oOwnComp.getModel();
+                const oEmpModel = oOwnComp.getModel("empModel");
                 //Fetching the employee detail from the table
-                const sUrl="/UserSet('')"
+                const sUrl = "/UserSet('')"
                 oModel.read(sUrl, {
                     success: function (oData) {
-                        oEmpModel.setProperty("/empDetail",oData)
+                        oEmpModel.setProperty("/empDetail", oData)
                     },
                     error: function (oError) {
                     }
@@ -55,7 +55,7 @@ sap.ui.define([
                 this.byId("fileUploader").setValue("")
             },
             handleValueChange(oEvent) {
-                var oModel = this.getView().getModel("docModel");
+                const oModel = this.getView().getModel("docModel");
                 oModel.setProperty("/Doc", oEvent.getSource().oFileUpload.files[0])
             },
             onDeleteFile() {
@@ -82,11 +82,11 @@ sap.ui.define([
 
             },
             onAddFile(oEvent) {
-                var oModel = this.getView().getModel("docModel");
-                var oFile = oModel.getProperty("/Doc");
-                var aDocuments = oModel.getProperty("/Document");
-                var oComboTxt = oModel.getProperty("/cmboxid");
-                var that = this;
+                const oModel = this.getView().getModel("docModel");
+                const oFile = oModel.getProperty("/Doc");
+                const aDocuments = oModel.getProperty("/Document");
+                const oComboTxt = oModel.getProperty("/cmboxid");
+                const that = this;
                 if (!oFile) {
                     MessageToast.show("Please select a file first.");
                     return;
@@ -125,7 +125,7 @@ sap.ui.define([
             },
             downloadDOc: function (base64String, fileName, mimeType) {
                 // Decode Base64
-                const byteCharacters = atob(base64String); 
+                const byteCharacters = atob(base64String);
                 const byteNumbers = new Array(byteCharacters.length);
 
                 for (let i = 0; i < byteCharacters.length; i++) {
@@ -143,6 +143,33 @@ sap.ui.define([
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            },
+            onSubReq() {
+                const oModel=this.getView().getModel();
+                const oDocModel = this.getView().getModel("docModel"); // or use a named model
+                const oEmpModel = this.getView().getModel("empModel");
+                const perNO=oEmpModel.getProperty("/empDetail/Id");
+                const perType=oDocModel.getProperty("/cmboxid");
+                const commt=oDocModel.getProperty("/comment");
+                const that=this;
+                const oPayload = {
+                    RequesterId: perNO,
+                    PermitType: perType,
+                    Remarks: commt,
+                    Document: []
+                };
+
+                oModel.create("/RequestSet", oPayload, {
+                    success: function (oData, response) {
+                        MessageToast.show("Request created successfully!");
+                        that.byId("comboBox1").setSelectedKey("")
+                        oDocModel.setProperty("/comment","");
+                    },
+                    error: function (oError) {
+                        MessageBox.error("Error creating request.");
+                    }
+                });
+
             }
         });
     });

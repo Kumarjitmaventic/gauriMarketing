@@ -25,6 +25,19 @@
           "odataVersion": "2.0"
         }
       }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "ZMKTCAMP-Display": {
+          "semanticObject": "ZMKTCAMP",
+          "action": "Display",
+          "title": "{{ZMKTCAMP-Display.flpTitle}}",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
     }
   },
   "sap.ui": {
@@ -69,10 +82,10 @@
         "preload": true,
         "settings": {}
       },
-       "docModel": {
+      "docModel": {
         "type": "sap.ui.model.json.JSONModel"
       },
-       "empModel": {
+      "empModel": {
         "type": "sap.ui.model.json.JSONModel"
       }
     },
