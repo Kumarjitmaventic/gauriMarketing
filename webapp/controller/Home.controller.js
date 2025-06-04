@@ -21,6 +21,19 @@ sap.ui.define([
                     error: function (oError) {
                     }
                 });
+                let oRouter = this.getOwnerComponent().getRouter();
+                let oRoute = oRouter.getRoute("RouteHome"); // Replace with your actual route name
+                oRoute.attachPatternMatched(this._onRouteMatched, this);
+            },
+            _onRouteMatched: function (oEvent) {
+                // Get query parameters from the route
+                let oQueryParams = oEvent.getParameter("arguments")?.RequestId || null;
+ 
+                if (oQueryParams) {
+                    console.log("myParam:", oQueryParams);
+                } else {
+                    console.log("No query parameters provided.");
+                }
             },
             onDownloadFiles(oEvent) {
                 //Fetching selected Items from table
