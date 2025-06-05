@@ -139,7 +139,7 @@
                     id="_IDGenLabel10"
                     text="Permit Type"
                 />
-                <ComboBox id="_IDGenComboBox" change="onSelectionChange">
+                <ComboBox id="_IDGenComboBox" change="onSelectionPermit" editable="{=${empModel>/empDetail/Role}==='Marketing'?true:false}">
                     <items>
                         <core:Item
                             id="_IDGenItem1"
@@ -178,14 +178,14 @@
                
                 <Table id="idProductsTable" mode="MultiSelect"
 		inset="false"
-		items="{docModel>/Document}" showRowCount="10">
+		items="{docModel>/Document}" showRowCount="10" >
 		<headerToolbar>
     <OverflowToolbar>
         <content>
             <ToolbarSpacer /> <!-- Pushes content to the right -->
-            <Button  text="Upload" press="onUploadFiles" />
+            <Button  text="Upload" press="onUploadFiles" enabled="{=${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'?true:false}"/>
             <Button text="Download" press="onDownloadFiles"/>
-            <Button text ="Delete" press="onDeleteFile"/>
+            <Button text ="Delete" press="onDeleteFile" enabled="{=${empModel>/empDetail/Role}==='Marketing'  || ${empModel>/empDetail/Role}==='Approver'?true:false}"/>
         </content>
     </OverflowToolbar>
 </headerToolbar>
@@ -202,8 +202,8 @@
 			</Column>
 			
 		</columns>
-		<items>
-			<ColumnListItem vAlign="Middle">
+		<items >
+			<ColumnListItem vAlign="Middle" >
 				<cells>
 					
 					<Text
@@ -224,7 +224,7 @@
             singleContainerFullSize="true"
         >
             <f:content>
-               <TextArea id="commentBox" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." />
+               <TextArea id="commentBox" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." editable="{= ${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'?true:false}"/>
              
             </f:content>
             
@@ -242,11 +242,20 @@
                         <Button id="_IDGenButton2"
                             text="Approve Request"
                             type="Emphasized"
-                            visible="{=${empModel>/empDetail/Role}==='Marketing'?false:true}"
+                            visible="{=${empModel>/empDetail/Role}==='Approver'?true:false}"
+                            press="onAppReq"
+                        />
+                         <Button id="_IDGenButton4"
+                            text="Reject Request"
+                            type="Emphasized"
+                            visible="{=${empModel>/empDetail/Role}==='Approver'?true:false}"
+                            press="onAppReq"
                         />
                         <Button id="_IDGenButton3"
                             text="Cancel"
                             type="Default"
+                            visible="{=${empModel>/empDetail/Role}==='Marketing'?true:false}"
+                            press="onClear"
                         />
                     </contentRight>
                 </Bar>

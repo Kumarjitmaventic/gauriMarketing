@@ -109,7 +109,7 @@
       "routes": [
         {
           "name": "RouteHome",
-          "pattern": ":?RequestId={}}",
+          "pattern": ":?query:",
           "target": [
             "TargetHome"
           ]
