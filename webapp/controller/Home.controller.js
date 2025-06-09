@@ -20,13 +20,15 @@ sap.ui.define([
                 const oModel = oOwnComp.getModel();
                 const oEmpModel = oOwnComp.getModel("empModel");
                 let role;
-                let RequestId
+                let RequestId, sReqUrl;
                 let oStartupParameters = this.getOwnerComponent().getComponentData().startupParameters;
                 let sUrl = "/UserSet('')"
                 if (oStartupParameters && oStartupParameters.RequestId) {
 
                     RequestId = oStartupParameters.RequestId[0]
-                    sUrl = "/UserSet(" + RequestId + ")"
+                    sUrl = "/UserSet('" + RequestId + "')"
+                    sReqUrl = "/RequestSet('" + RequestId + "')"
+                    this.getReqDet(sReqUrl, oModel, oDocModel, oEmpModel);
                 }
                 //Fetching the employee detail from the table
 
@@ -43,6 +45,16 @@ sap.ui.define([
                     }
                 });
             },
+            getReqDet(sReqUrl, oModel, oDocModel, oEmpModel) {
+                oModel.read(sReqUrl, {
+                    success: function (oData) {
+                        oDocModel.setProperty("/comment", oData.Remarks)
+                        this.byId("_IDGenComboBox").setSelectedKey(oData.PermitType)
+                    },
+                    error: function (oError) {
+                    }
+                });
+            },
             onDownloadFiles(oEvent) {
                 //Fetching selected Items from table
                 var aSelectedItems = this.byId("idProductsTable").getSelectedItems()
@@ -53,6 +65,7 @@ sap.ui.define([
                 var that = this;
                 var oModel = this.getView().getModel("docModel");
                 //looping through the selected items for downloading each file
+
                 aSelectedItems.forEach(element => {
                     var sPath = element.getBindingContextPath();
                     var docItem = oModel.getProperty(sPath)
@@ -80,21 +93,33 @@ sap.ui.define([
                 oModel.setProperty("/Doc", oEvent.getSource().oFileUpload.files[0])
             },
             onDeleteFiles(aSelectedItems) {
+                // if (aSelectedItems.length === 0) {
+                //     MessageToast.show("Please select at least one row to delete.");
+                //     return;
+                // }
+                // const that = this;
+                // const oModel = this.getView().getModel("docModel");
+                // const aDocuments = oModel.getProperty("/Document");
+                // let ind = 0;
+                // //looping each Items and removing from model
+                // aSelectedItems.forEach((element, ind) => {
+                //     var sPath = element.getBindingContextPath();
+                //     var docId = (sPath.split("/")).slice(-1)[0];
+                //     aDocuments.splice(docId - ind, 1);
+                //     ind++;
+                // });
+                // oModel.refresh(true);
                 if (aSelectedItems.length === 0) {
                     MessageToast.show("Please select at least one row to delete.");
                     return;
                 }
-                const that = this;
                 const oModel = this.getView().getModel("docModel");
-                const aDocuments = oModel.getProperty("/Document");
-                let ind = 0;
-                //looping each Items and removing from model
-                aSelectedItems.forEach((element, ind) => {
-                    var sPath = element.getBindingContextPath();
-                    var docId = (sPath.split("/")).slice(-1)[0];
-                    aDocuments.splice(docId - ind, 1);
-                    ind++;
-                });
+                let aDocuments = oModel.getProperty("/Document");
+                const indicesToRemove = aSelectedItems.map(item =>
+                    parseInt(item.getBindingContextPath().split("/").pop(), 10)
+                );
+                aDocuments = aDocuments.filter((_, idx) => !indicesToRemove.includes(idx));
+                oModel.setProperty("/Document", aDocuments);
                 oModel.refresh(true);
             },
             onDeleteFile() {
@@ -126,7 +151,7 @@ sap.ui.define([
                     const base64String = e.target.result.split(",")[1];
                     const mimeType = e.target.result.split(";")[0].replace('data:', '')
                     const oModel = this.getView().getModel("docModel");
-                    const role = oEmpModel.getProperty("/empDetail/role");
+                    const role = oEmpModel.getProperty("/empDetail/Role");
                     let oData = {
                         FileName: oFile.name,
                         FileContent: base64String,
@@ -153,15 +178,16 @@ sap.ui.define([
                 }.bind(this);
                 reader.readAsDataURL(oFile);
             },
-            onSelectionChange(oEvent) {
-                var oModel = this.getView().getModel("docModel");
-                var combTxt = oEvent.getSource().getSelectedItem().getProperty("text");
+            _setComboBoxText(oEvent, sModelName) {
+                const oModel = this.getView().getModel(sModelName);
+                const combTxt = oEvent.getSource().getSelectedItem()?.getProperty("text") || "";
                 oModel.setProperty("/cmboxText", combTxt);
             },
+            onSelectionChange(oEvent) {
+                this._setComboBoxText(oEvent, "docModel");
+            },
             onSelectionPermit(oEvent) {
-                var oModel = this.getView().getModel("empModel");
-                var combTxt = oEvent.getSource().getSelectedItem().getProperty("text");
-                oModel.setProperty("/cmboxText", combTxt);
+                this._setComboBoxText(oEvent, "empModel");
             },
             downloadDOc: function (base64String, fileName, mimeType) {
                 // Decode Base64
@@ -236,12 +262,16 @@ sap.ui.define([
 
             },
             onAppReq(oEvent) {
-                const clcButt=oEvent.getSource().getProperty("text")
-                if(clcButt==="Approve Request"){
-                    const Action ="X"
+                // var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+                // oRouter.navTo("RouteHome", {
+                //     RequestId: "0000021"
+                // });
+                const clcButt = oEvent.getSource().getProperty("text")
+                if (clcButt === "Approve Request") {
+                    const Action = "X"
                 }
-                else{
-                    const Action =""
+                else {
+                    const Action = ""
                 }
                 const oModel = this.getView().getModel();
                 const oDocModel = this.getView().getModel("docModel");
@@ -253,8 +283,11 @@ sap.ui.define([
                 if (oStartupParameters && oStartupParameters.RequestId) {
                     const RequestId = oStartupParameters.RequestId[0]
                 }
+                else {
+                    MessageBox.error("Error creating request.");
+                }
                 aDocuments.forEach(element => {
-                    if (element?.role && element.role === "Approve") {
+                    if (element?.role && element.role === "Approver") {
                         let oDoc = {
                             Filename: element.FileName,
                             Mimetype: element.mimeType,
@@ -271,22 +304,22 @@ sap.ui.define([
                     Document: aDocs
                 };
                 this.onCreateApproval(oPayload)
-               
+
 
 
             },
-            onCreateApproval(oPayload){
-                const oModel=this.getView().getModel()
-                 oModel.create("/RequestSet", oPayload, {
+            onCreateApproval(oPayload) {
+                const oModel = this.getView().getModel()
+                oModel.create("/RequestSet", oPayload, {
                     success: function (oData, response) {
                         MessageToast.show("Request Approved successfully!");
-                       
+
                     },
                     error: function (oError) {
                         MessageBox.error("Error creating request.");
                     }
                 });
-                
+
             }
         });
     });

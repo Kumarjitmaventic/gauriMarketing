@@ -139,31 +139,31 @@
                     id="_IDGenLabel10"
                     text="Permit Type"
                 />
-                <ComboBox id="_IDGenComboBox" change="onSelectionPermit" editable="{=${empModel>/empDetail/Role}==='Marketing'?true:false}">
+                <ComboBox id="_IDGenComboBox"    change="onSelectionPermit" editable="{=${empModel>/empDetail/Role}==='Marketing'}">
                     <items>
                         <core:Item
                             id="_IDGenItem1"
-                            key="1"
+                            key="SPECIAL OFFER"
                             text="Special Offer"
                         />
                         <core:Item
                             id="_IDGenItem2"
-                            key="2"
+                            key="RAFFLE DRAW"
                             text="Raffle Draw"
                         />
                         <core:Item
                             id="_IDGenItem3"
-                            key="3"
+                            key="SCRATCH &amp; WIN"
                             text="Scratch &amp; Win"
                         />
                         <core:Item
                             id="_IDGenItem4"
-                            key="4"
+                            key="SALES"
                             text="Sales"
                         />
                         <core:Item
                             id="_IDGenItem5"
-                            key="5"
+                            key="ADVERTISING STICKERS"
                             text="Advertising Stickers"
                         />
                     </items>
@@ -183,9 +183,9 @@
     <OverflowToolbar>
         <content>
             <ToolbarSpacer /> <!-- Pushes content to the right -->
-            <Button  text="Upload" press="onUploadFiles" enabled="{=${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'?true:false}"/>
+            <Button  text="Upload" press="onUploadFiles" enabled="{=${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'}"/>
             <Button text="Download" press="onDownloadFiles"/>
-            <Button text ="Delete" press="onDeleteFile" enabled="{=${empModel>/empDetail/Role}==='Marketing'  || ${empModel>/empDetail/Role}==='Approver'?true:false}"/>
+            <Button text ="Delete" press="onDeleteFile" enabled="{=${empModel>/empDetail/Role}==='Marketing'  || ${empModel>/empDetail/Role}==='Approver'}"/>
         </content>
     </OverflowToolbar>
 </headerToolbar>
@@ -224,7 +224,8 @@
             singleContainerFullSize="true"
         >
             <f:content>
-               <TextArea id="commentBox" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." editable="{= ${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'?true:false}"/>
+               <TextArea id="commentBox" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." editable="{= ${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'}"/>
+               <TextArea id="commentBox1" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." editable="{= ${empModel>/empDetail/Role}==='Approver'}" visible="{= ${empModel>/empDetail/Role}==='Approver'}"/>
              
             </f:content>
             
@@ -236,25 +237,25 @@
                         <Button id="_IDGenButton1"
                             text="Submit Request"
                             type="Emphasized"
-                            visible="{=${empModel>/empDetail/Role}==='Marketing'?true:false}"
+                            visible="{=${empModel>/empDetail/Role}==='Marketing'}"
                             press="onSubReq"
                         />
                         <Button id="_IDGenButton2"
                             text="Approve Request"
                             type="Emphasized"
-                            visible="{=${empModel>/empDetail/Role}==='Approver'?true:false}"
+                            visible="{=${empModel>/empDetail/Role}==='Approver'}"
                             press="onAppReq"
                         />
                          <Button id="_IDGenButton4"
                             text="Reject Request"
                             type="Emphasized"
-                            visible="{=${empModel>/empDetail/Role}==='Approver'?true:false}"
+                            visible="{=${empModel>/empDetail/Role}==='Approver'}"
                             press="onAppReq"
                         />
                         <Button id="_IDGenButton3"
                             text="Cancel"
                             type="Default"
-                            visible="{=${empModel>/empDetail/Role}==='Marketing'?true:false}"
+                            visible="{=${empModel>/empDetail/Role}==='Marketing'}"
                             press="onClear"
                         />
                     </contentRight>
