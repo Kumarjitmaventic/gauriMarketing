@@ -1,4 +1,6 @@
-<mvc:View xmlns:upload="sap.m.upload" xmlns:plugins="sap.m.plugins"
+<mvc:View
+    xmlns:upload="sap.m.upload"
+    xmlns:plugins="sap.m.plugins"
     controllerName="marketingcampaign.zcrmktmarketingcampaign.controller.Home"
     xmlns:smartForm="sap.ui.comp.smartform"
     xmlns:smartField="sap.ui.comp.smartfield"
@@ -17,9 +19,42 @@
 >
     <Page
         id="page"
-        title="{i18n>title}"
+        title="{uiModel>/title}"
     >
-    
+        <!-- <Panel
+            id="floatingPanel"
+            class="floating-toolbar"
+        >
+            <Toolbar>
+                <ToolbarSpacer />
+                <Button
+                    id="EditBt"
+                    text="Edit"
+                    press="onEditPress"
+                    visible="{=${empModel>/empDetail/Role}==='Approver'}"
+                />
+                <Button
+                    id="SubBt"
+                    text="Submit Request"
+                    type="Emphasized"
+                    visible="false"
+                    press="onSubReq"
+                />
+                <Button
+                    id="SaveBt"
+                    text="Save"
+                    type="Accept"
+                    press="onPressSave"
+                    visible="{=${empModel>/empDetail/Role}==='Marketing'}"
+                />
+                <Button
+                    id="CanBT"
+                    text="Cancel"
+                    press="onCancelPress"
+                    visible="false"
+                />
+            </Toolbar>
+        </Panel> -->
         <f:SimpleForm
             id="SimpleFormChange354wideDual"
             editable="true"
@@ -39,6 +74,44 @@
             columnsM="1"
             singleContainerFullSize="false"
         >
+            <f:toolbar>
+                <Toolbar>
+                    <ToolbarSpacer />
+                   
+                    <Button
+                        id="EditBt"
+                        text="Edit"
+                        press="onEditPress"
+                        visible="{=${uiModel>/show_Edit}}"
+                    />
+                    <Button
+                        id="SubBt"
+                        text="Submit Request"
+                        type="Emphasized"
+                        visible="{=${uiModel>/show_Sub}}"
+                        press="onSubReq"
+                    />
+                     <Button
+                        id="AppBT"
+                        text="Cancel"
+                        press="onCancelPress"
+                        visible="{=${uiModel>/show_Appr}}"
+                    />
+                    <Button
+                        id="SaveBt"
+                        text="Save"
+                        type="Accept"
+                        press="onPressSave"
+                        visible="{=${uiModel>/show_Save}}"
+                    />
+                    <Button
+                        id="CanBT"
+                        text="Cancel"
+                        press="onCancelPress"
+                        visible="{=${uiModel>/show_Cancel}}"
+                    />
+                </Toolbar>
+            </f:toolbar>
             <f:content>
                 <core:Title
                     id="_IDGenTitle1"
@@ -62,7 +135,6 @@
                     editable="false"
                     value="{empModel>/empDetail/Designation}"
                 />
-
                 <Label
                     id="_IDGenLabel2"
                     text="Grade"
@@ -72,7 +144,6 @@
                     editable="false"
                     value="{empModel>/empDetail/Grade}"
                 />
-
                 <Label
                     id="_IDGenLabel3"
                     text="Cost Center"
@@ -119,7 +190,7 @@
             id="SimpleFormChange354wideDual2"
             editable="true"
             layout="ResponsiveGridLayout"
-            title="Permit Detalis"
+            title="Permit Details"
             labelSpanXL="4"
             labelSpanL="4"
             labelSpanM="12"
@@ -139,31 +210,36 @@
                     id="_IDGenLabel10"
                     text="Permit Type"
                 />
-                <ComboBox id="_IDGenComboBox"    change="onSelectionPermit" editable="{=${empModel>/empDetail/Role}==='Marketing'}">
+                <ComboBox
+                    id="_IDGenComboBox"
+                    change="onSelectionPermit"
+                    editable="{=${uiModel>/Editable}}"
+                    selectedKey="{docModel>/keyPermitType}"
+                >
                     <items>
                         <core:Item
                             id="_IDGenItem1"
-                            key="SPECIAL OFFER"
+                            key="Special Offer"
                             text="Special Offer"
                         />
                         <core:Item
                             id="_IDGenItem2"
-                            key="RAFFLE DRAW"
+                            key="Raffle Draw"
                             text="Raffle Draw"
                         />
                         <core:Item
                             id="_IDGenItem3"
-                            key="SCRATCH &amp; WIN"
+                            key="Scratch &amp; Win"
                             text="Scratch &amp; Win"
                         />
                         <core:Item
                             id="_IDGenItem4"
-                            key="SALES"
+                            key="Sales"
                             text="Sales"
                         />
                         <core:Item
                             id="_IDGenItem5"
-                            key="ADVERTISING STICKERS"
+                            key="Advertising Stickers"
                             text="Advertising Stickers"
                         />
                     </items>
@@ -171,88 +247,119 @@
             </f:content>
         </f:SimpleForm>
         <f:SimpleForm
-           title="Attachments"
+            title="Attachments"
             singleContainerFullSize="false"
         >
             <f:content>
-               
-                <Table id="idProductsTable" mode="MultiSelect"
-		inset="false"
-		items="{docModel>/Document}" showRowCount="10" >
-		<headerToolbar>
-    <OverflowToolbar>
-        <content>
-            <ToolbarSpacer /> <!-- Pushes content to the right -->
-            <Button  text="Upload" press="onUploadFiles" enabled="{=${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'}"/>
-            <Button text="Download" press="onDownloadFiles"/>
-            <Button text ="Delete" press="onDeleteFile" enabled="{=${empModel>/empDetail/Role}==='Marketing'  || ${empModel>/empDetail/Role}==='Approver'}"/>
-        </content>
-    </OverflowToolbar>
-</headerToolbar>
-		
-		<columns>
-			<Column minScreenWidth="Tablet"
-				demandPopin="true">
-				<Text text="File Name" />
-			</Column>
-			<Column
-				minScreenWidth="Tablet"
-				demandPopin="true">
-				<Text text="Doc Type" />
-			</Column>
-			
-		</columns>
-		<items >
-			<ColumnListItem vAlign="Middle" >
-				<cells>
-					
-					<Text
-						text="{docModel>FileName}" />
-					<Text
-						text="{docModel>DocType}" />
-                    
-					
-				</cells>
-			</ColumnListItem>
-		</items>
-	</Table>
+                <Table
+                    id="idProductsTable"
+                    mode="MultiSelect"
+                    inset="false"
+                    items="{docModel>/Document}"
+                    showRowCount="10"
+                >
+                    <headerToolbar>
+                        <OverflowToolbar>
+                            <content>
+                                <ToolbarSpacer />
+                                <!-- Pushes content to the right -->
+                                <Button
+                                    text="Upload"
+                                    press="onUploadFiles"
+                                    enabled="{=${uiModel>/Editable}}"
+                                />
+                                <Button
+                                    text="Download"
+                                    press="onDownloadFiles"
+                                    
+                                />
+                                <Button
+                                    text="Delete"
+                                    press="onDeleteFile"
+                                    enabled="{=${uiModel>/Editable}}"
+                                />
+                            </content>
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    <columns>
+                        <Column
+                            minScreenWidth="Tablet"
+                            demandPopin="true"
+                        >
+                            <Text text="File Name" />
+                        </Column>
+                        <Column
+                            minScreenWidth="Tablet"
+                            demandPopin="true"
+                        >
+                            <Text text="Doc Type" />
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem vAlign="Middle">
+                            <cells>
+                                <Text text="{docModel>FileName}" />
+                                <Text text="{docModel>DocType}" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
             </f:content>
-            
         </f:SimpleForm>
-       <f:SimpleForm
-           title="Comments"
+        <f:SimpleForm
+            title="Comments"
             singleContainerFullSize="true"
         >
             <f:content>
-               <TextArea id="commentBox" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." editable="{= ${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'}"/>
-               <TextArea id="commentBox1" rows="5" value="{docModel>/comment}" placeholder="Enter your comment here..." editable="{= ${empModel>/empDetail/Role}==='Approver'}" visible="{= ${empModel>/empDetail/Role}==='Approver'}"/>
-             
+                <TextArea
+                    id="commentBox"
+                    rows="5"
+                    value="{docModel>/comment}"
+                    placeholder="Enter your comment here..."
+                    editable="{= ${empModel>/empDetail/Role}==='Marketing' || ${empModel>/empDetail/Role}==='Approver'}"
+                />
+                <TextArea
+                    id="commentBox1"
+                    rows="5"
+                    value="{docModel>/comment}"
+                    placeholder="Enter your comment here..."
+                    visible="{= ${empModel>/empDetail/Role}==='Approver'}"
+                />
             </f:content>
-            
         </f:SimpleForm>
-        <footer>
+        <!-- <footer>
             <OverflowToolbar id="_IDGenOverflowToolbar">
                 <Bar id="_IDGenBar">
                     <contentRight>
-                        <Button id="_IDGenButton1"
+                        <Button
+                            id="_IDGenButton5"
+                            text="Save"
+                            type="Emphasized"
+                            press="onClear"
+                        />
+                        <Button
+                            id="_IDGenButton1"
                             text="Submit Request"
                             type="Emphasized"
                             visible="{=${empModel>/empDetail/Role}==='Marketing'}"
                             press="onSubReq"
                         />
-                        <Button id="_IDGenButton2"
+                        <Button
+                            id="_IDGenButton2"
                             text="Approve Request"
                             type="Emphasized"
                             visible="{=${empModel>/empDetail/Role}==='Approver'}"
                             press="onAppReq"
                         />
-                         <Button id="_IDGenButton4"
+                        <Button
+                            id="_IDGenButton4"
                             text="Reject Request"
                             type="Emphasized"
                             visible="{=${empModel>/empDetail/Role}==='Approver'}"
                             press="onAppReq"
                         />
-                        <Button id="_IDGenButton3"
+                        <Button
+                            id="_IDGenButton3"
                             text="Cancel"
                             type="Default"
                             visible="{=${empModel>/empDetail/Role}==='Marketing'}"
@@ -261,6 +368,6 @@
                     </contentRight>
                 </Bar>
             </OverflowToolbar>
-        </footer>
+        </footer> -->
     </Page>
 </mvc:View>

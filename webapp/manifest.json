@@ -19,7 +19,9 @@
       "mainService": {
         "uri": "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/",
         "type": "OData",
+
         "settings": {
+          
           "annotations": [],
           "localUri": "localService/mainService/metadata.xml",
           "odataVersion": "2.0"
@@ -87,6 +89,9 @@
       },
       "empModel": {
         "type": "sap.ui.model.json.JSONModel"
+      },
+      "uiModel": {
+        "type": "sap.ui.model.json.JSONModel"
       }
     },
     "resources": {
@@ -109,7 +114,7 @@
       "routes": [
         {
           "name": "RouteHome",
-          "pattern": ":RouteHome,RequestId:",
+          "pattern": ":RequestId:",
           "target": [
             "TargetHome"
           ]
