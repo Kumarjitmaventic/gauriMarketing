@@ -77,13 +77,19 @@
             <f:toolbar>
                 <Toolbar>
                     <ToolbarSpacer />
-                   
+                   <Button
+                        id="DownBt"
+                        text="Download"
+                        press="onDownPress"
+                        visible="{=${uiModel>/show_Download}}"
+                    />
                     <Button
                         id="EditBt"
                         text="Edit"
                         press="onEditPress"
                         visible="{=${uiModel>/show_Edit}}"
                     />
+                    
                     <Button
                         id="SubBt"
                         text="Submit Request"
@@ -213,7 +219,7 @@
                 <ComboBox
                     id="_IDGenComboBox"
                     change="onSelectionPermit"
-                    editable="{=${uiModel>/Editable}}"
+                    editable="{=${empModel>/empDetail/Role}==='Approver'? false : ${uiModel>/Editable}}"
                     selectedKey="{docModel>/keyPermitType}"
                 >
                     <items>

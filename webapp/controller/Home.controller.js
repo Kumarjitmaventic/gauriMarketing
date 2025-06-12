@@ -28,6 +28,7 @@ sap.ui.define([
                 uiModel.setProperty("/show_Save", false);
                 uiModel.setProperty("/show_Cancel", false);
                 uiModel.setProperty("/show_Appr", false);
+                uiModel.setProperty("/show_Download", false);
 
                 let RequestId, sReqUrl;
                 let createFlg = false;
@@ -39,7 +40,7 @@ sap.ui.define([
                     RequestId = oStartupParameters.RequestId[0]
                     sReqUrl = "/RequestSet('" + RequestId + "')"
                     this.getReqDet(sReqUrl, oModel, oDocModel, oEmpModel, uiModel);
-                    uiModel.setProperty("/title", "Marketing Campaign Request");
+                    uiModel.setProperty("/title", "Marketing Campaign Request(" + RequestId + ")");
                 }
                 else {
                     createFlg = true;
@@ -68,6 +69,7 @@ sap.ui.define([
                         if (oData.Status === "Draft") {
                             uiModel.setProperty("/show_Edit", true)
                             uiModel.setProperty("/show_Sub", true)
+                            uiModel.setProperty("/show_Download", true)
                         }
                         uiModel.setProperty("/Editable", false);
                         oDocModel.setProperty("/comment", oData.Remarks)
@@ -82,7 +84,7 @@ sap.ui.define([
             },
 
             onDownloadFiles(oEvent) {
-                
+
                 //Fetching selected Items from table
                 var aSelectedItems = this.byId("idProductsTable").getSelectedItems()
                 // if (aSelectedItems.length === 0) {
@@ -90,66 +92,121 @@ sap.ui.define([
                 //     return;
                 // }
                 var that = this;
-                 var oDModel =
-                        new sap.ui.model.odata.ODataModel("/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV")
+                var oDModel =
+                    new sap.ui.model.odata.ODataModel("/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV")
 
                 var oModel = this.getView().getModel("docModel");
-                 const sPath = "/DocumentSet('FOL38000000000004EXT50000000000214')/$value"
-                        oDModel.read(sPath, {
-                            success: function (data, response) {
-                                // that.downloadDOc(response.body, "Hi", 'image/png')
-                                var blob = new Blob([response], { type: 'application/pdf' });
- 
-                    // Create an Object URL for the Blob and open it in a new tab
-                    var url = URL.createObjectURL(blob);
-                    var newTab = window.open(url, '_blank');
+                // const sPath = "/DocumentSet('FOL50000000000111EXT50000000000237')/$value"
+                const sPath = "/RequestPdfSet('111')/$value"
+                
+                // oDModel.read(sPath, {
+                //     success: function (data, response) {
+                //         const mimeType=response.headers['Content-Type'];
+                //         const fileName=eval(response.headers['content-disposition'].split("=")[1])
+                //         that.downloadDOc(response.body, fileName, mimeType)
+                //         var blob = new Blob([response], { type: mimeType });
 
-                            },
-                            error: function (oError) {
-                                MessageBox.error("Error downloading file.");
-                            }
-                        });
+                //         // Create an Object URL for the Blob and open it in a new tab
+                //         var url = URL.createObjectURL(blob);
+                //         var newTab = window.open(url, '_blank');
+
+                //     },
+                //     error: function (oError) {
+                //         MessageBox.error("Error downloading file.");
+                //     }
+                // });
                 //looping through the selected items for downloading each file
 
                 aSelectedItems.forEach(element => {
                     var sPath = element.getBindingContextPath();
                     var docItem = oModel.getProperty(sPath)
-                   
-                    if (!docItem.FileContent) {
+
+                    if (docItem.FileContent) {
                         this.downloadDOc(docItem.FileContent, docItem.FileName, docItem.MimeType)
                     }
                     else {
 
-                        var sAttachmentId = "FOL50000000000125BIN50000000000008";
-                        var sPdfPath = "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV" + "/DocumentSet('" + sAttachmentId + "')/$value";
-
-                        // var oHtml = new sap.ui.core.HTML({
-                        //     content: "<iframe src='" + sPdfPath + "' width='100%' height='600px' frameborder='0'></iframe>"
-                        // });
-                        sap.m.URLHelper.redirect(sPdfPath, true);
-                        // var a = document.createElement("a");
-                        // a.href = sPdfPath;
-                        // a.download = "MyDownloadedFile.pdf"; // Set the desired 
-                        // document.body.appendChild(a); 
-                        // a.click(); 
-                        // document.body.removeChild(a);
-                        // Add the HTML control to a container in your view, e.g., a SimpleForm or Panel
-                        
-
-                        // const sPath = "/DocumentSet('FOL50000000000111EXT50000000000224')/$value"
-                        // oDModel.read(sPath, {
-                        //     success: function (data, response) {
-                        //         that.downloadDOc(data.FileContent, data.FileName, data.MimeType);
-                        //         console.log("File downloaded successfully.");
-                        //     },
-                        //     error: function (oError) {
-                        //         MessageBox.error("Error downloading file.");
-                        //     }
-                        // });
+                        $.ajax({
+                            url: "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/DocumentSet('FOL38000000000004EXT50000000000274')/$value",
+                            type: "GET",
+                            xhrFields: {
+                                responseType: "blob" // Ensures binary data handling
+                            },
+                            success: function (blob) {
+                                var url = URL.createObjectURL(blob); // Convert blob to URL
+                                window.open(url); // Open the file in a new tab
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error fetching stream:", error);
+                            }
+                        });
                     }
 
                 });
                 console.log(oEvent)
+            },
+            onSubReq() {
+                var oDialog = new sap.m.Dialog({
+                    title: "Confirmation",
+                    type: "Message",
+                    content: new sap.m.Text({ text: "Do you want to submit the request" }),
+                    beginButton: new sap.m.Button({
+                        text: "OK",
+                        press: function () {
+                            this.onSubmit();
+                            oDialog.close();
+                        }.bind(this)
+                    }),
+                    endButton: new sap.m.Button({
+                        text: "Cancel",
+                        press: function () {
+                            oDialog.close();
+                        }
+                    }),
+                    afterClose: function () {
+                        oDialog.destroy();
+                    }
+                })
+
+                oDialog.open();
+
+            },
+
+            onDownPress() {
+
+            },
+            onSubmit() {
+                const uiModel = this.getView().getModel("uiModel");
+                const oModel = this.getView().getModel();
+                const oDocModel = this.getView().getModel("docModel")
+                const oEmpModel = this.getView().getModel("empModel")
+                const RequestId = uiModel.getProperty("/RequestId");
+                const that = this;
+                const commt = oDocModel.getProperty("/comment")
+                const perType = oEmpModel.getProperty("/cmboxText");
+
+                const oPayload = {
+                    PermitType: perType,
+                    Remarks: commt,
+                    Status: "Initiated"
+
+                }
+                var sUrl = "/RequestSet('" + RequestId + "')";
+                oModel.update(sUrl, oPayload, {
+                    success: function (oData, response) {
+                        uiModel.setProperty("/show_Edit", false)
+                        uiModel.setProperty("/show_Sub", false)
+                        uiModel.setProperty("/show_Save", false);
+                        uiModel.setProperty("/show_Cancel", false);
+                        uiModel.setProperty("/show_Appr", false);
+                        uiModel.setProperty("/Editable", false);
+                        that.onClear();
+                        MessageBox.success("Request Submitted Sucessfully");
+                    },
+                    error: function (oError) {
+                        MessageBox.error("Could not submit the request");
+                    }
+                });
             },
             onUploadFiles() {
 
@@ -255,6 +312,7 @@ sap.ui.define([
 
 
                     const binaryArray = e.target.result;
+                    const blob = new Blob([binaryArray], { type: oFile.type });
                     const mimeType = oFile.type // Default to binary if type is not available
                     const oModel = this.getView().getModel("docModel");
                     const role = oEmpModel.getProperty("/empDetail/Role");
@@ -262,7 +320,7 @@ sap.ui.define([
                     formData.append("file", oFile);
                     let oData = {
                         FileName: oFile.name,
-                        FileContent: binaryArray,
+                        FileContent: blob,
                         DocType: oComboTxt,
                         Mimetype: mimeType,
                         status: "Draft"
@@ -368,25 +426,41 @@ sap.ui.define([
                     Remarks: commt,
                     Status: "Draft"
                 };
+                // that.createDocuments(aDocs);
                 // oModel.setDeferredGroups(["batchCreate"]);
+                const RequestId = uiModel?.getProperty("/RequestId");
+                that.createDocuments(aDocs)
+                // if (!RequestId) {
+                //     that.createDocuments(aDocs);
+                // }
+                // else {
+                //     oModel.create("/RequestSet", oPayload, {
+                //         success: function (oData, response) {
+                //             that.getView().getModel("empModel").setProperty("/empDetail/Editable", false);
+                //             uiModel.setProperty("/RequestId", oData.RequestId);
+                //             uiModel.setProperty("/title", "Marketing Campaign Request(" + oData.RequestId + ")");
+                //             MessageBox.success("Request created successfully this is your Request Id: " + oData.RequestId);
+                //             if (aDocs.length > 0) {
+                //                 that.createDocuments(aDocs);
+                //             }
+                //             else {
+                //                 uiModel.setProperty("/Editable", false);
+                //                 uiModel.setProperty("/show_Edit", true)
+                //                 uiModel.setProperty("/show_Sub", true)
+                //                 uiModel.setProperty("/show_Save", false);
+                //                 uiModel.setProperty("/show_Cancel", false);
+                //             }
+                //             // MessageToast.show("Request created successfully!");
+                //             // that.byId("comboBox1").setSelectedKey("")
+                //             // oDocModel.setProperty("/comment", "");
+                //             // that.onClear();
+                //         },
+                //         error: function (oError) {
+                //             MessageBox.error("Error creating request.");
+                //         }
+                //     });
+                // }
 
-                oModel.create("/RequestSet", oPayload, {
-                    success: function (oData, response) {
-                        that.getView().getModel("empModel").setProperty("/empDetail/Editable", false);
-                        uiModel.setProperty("/RequestId", oData.RequestId);
-                        MessageBox.success("Request created successfully this is your Request Id: " + oData.RequestId);
-                        if(aDocs.length > 0) {
-                        that.createDocuments(aDocs);
-                        }
-                        // MessageToast.show("Request created successfully!");
-                        // that.byId("comboBox1").setSelectedKey("")
-                        // oDocModel.setProperty("/comment", "");
-                        // that.onClear();
-                    },
-                    error: function (oError) {
-                        MessageBox.error("Error creating request.");
-                    }
-                });
 
             },
             createDocuments(aDocs) {
@@ -394,43 +468,45 @@ sap.ui.define([
                 const uiModel = this.getView().getModel("uiModel");
                 const oDocModel = this.getView().getModel("docModel");
                 const RequestId = uiModel.getProperty("/RequestId");
-                // uiModel.getProperty("/RequestId");
-                let sUrl = "/RequestSet('" + RequestId + "')/Document";
-                var oDModel =
-                    new sap.ui.model.odata.ODataModel("/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV")
                 let aPromises = [];
                 aDocs.forEach((element, index) => {
-
-                    const payload = element.FileContent
+                    var formData = new FormData();
+                    formData.append("file", element.FileContent, element.Filename);
+                    const csrfToken = oModel.getSecurityToken()
+                    const oHeaders = {
+                        'slug': element.Filename,
+                        'Content-Type': element.Mimetype,
+                        'doctype': element.DocType,
+                        'X-CSRF-Token': csrfToken
+                    }
                     const promise = new Promise((resolve, reject) => {
-                        oDModel.create(sUrl, payload, {
-                            headers: {
-                                "slug": `"${element.FileName}"`,
-                                "content-type": element.Mimetype
-                            },
-                            success: function (oData, response) {
-                                element.DocId = oData.DocId
-                                resolve(oData);
-                            },
-                            error: function (oError) {
-                                reject(oError);
-                            }
-                        });
+                        $.ajax({
+                        url: "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/RequestSet('"+RequestId+"')/Document",
+                        type: "POST",
+                        headers: oHeaders,
+                        processData: false,
+                        contentType: false,
+                        data: formData,
+                        success: function (oData, Response) {
+                            sap.m.MessageToast.show("File uploaded successfully!");
+                        },
+                        error: function (err) {
+                            console.error("Upload failed:", err);
+                        }
+                    });
                     });
                     aPromises.push(promise);
 
                 });
                 Promise.all(aPromises).then(() => {
-                    
+
                     uiModel.setProperty("/Editable", false);
                     uiModel.setProperty("/show_Edit", true)
                     uiModel.setProperty("/show_Sub", true)
                     uiModel.setProperty("/show_Save", false);
                     uiModel.setProperty("/show_Cancel", false);
-                    uiModel.setProperty("/show_Save", false);
-                    uiModel.setProperty("/show_Cancel", false);
                     oDocModel.setProperty("/comment", "");
-                    this.onClear();
+
                 }).catch((error) => {
                     MessageBox.error("Error creating documents.");
                 });
