@@ -25,7 +25,7 @@
 
         <VBox class='sapUiSmallMarginBegin sapUiSmallMarginTop' >
             <Label text="Choose a File:" labelFor="file uploader" required="true"/>
-            <u:FileUploader enabled="{= ${docModel>/Doc/docType} === ''? false : true }" valueState="{docModel>/valueState/file}"  id="fileUploader" name="myFileUpload" uploadComplete="handleUploadComplete" change="onFileSelectionChange" multiple="false" />
+            <u:FileUploader fileType="{docModel>/fileType}" enabled="{= ${docModel>/Doc/docType} === ''? false : true }" valueState="{docModel>/valueState/file}"  id="fileUploader" name="myFileUpload" uploadComplete="handleUploadComplete" change="onFileSelectionChange" multiple="false" />
         </VBox>
 
         <beginButton>

@@ -41,7 +41,7 @@ sap.ui.define([], function () {
             return (sStatusKey == "NEW")? "Create new marketing campaign request : " : `Marketing Campaign Request :  ${requestId} | ${oStatusMap[sStatusKey]}` 
         },
 
-        getPageTitle: function (sStatusKey, requestId){
+        getPageTitle: function (sStatusKey, requestId, updatedAt){
             const oStatusMap = {
                 DRF: "Draft",
                 INI: "Initiated",

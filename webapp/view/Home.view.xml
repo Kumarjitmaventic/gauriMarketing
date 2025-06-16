@@ -23,7 +23,8 @@
                     parts: [
                         
                         { path: 'uiModel>/ui/requestStatus' },
-                        { path: 'uiModel>/ui/requestId' }
+                        { path: 'uiModel>/ui/requestId' },
+                        { path: 'requestModel>/' }
                     ],
                     formatter: '.formatter.getPageTitle'
                 }"
