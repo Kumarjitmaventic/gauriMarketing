@@ -1,576 +1,1063 @@
-
-
-sap.ui.define([
-    "sap/ui/core/mvc/Controller",
-    "sap/m/MessageToast",
-    "sap/m/MessageBox"
-],
-    function (Controller,
+sap.ui.define(
+    [
+        "sap/ui/core/mvc/Controller",
+        "sap/m/MessageToast",
+        "sap/m/MessageBox",
+        "marketingcampaign/zcrmktmarketingcampaign/utils/formatter",
+        "sap/ui/layout/HorizontalLayout",
+        "sap/ui/layout/VerticalLayout",
+        "sap/m/Dialog",
+        "sap/m/Button",
+        "sap/m/Label",
+        "sap/m/library",
+        "sap/m/Text",
+        "sap/m/TextArea",
+    ],
+    function (
+        Controller,
         MessageToast,
-        MessageBox) {
+        MessageBox,
+        formatter,
+        HorizontalLayout,
+        VerticalLayout,
+        Dialog,
+        Button,
+        Label,
+        mobileLibrary,
+        Text,
+        TextArea
+    ) {
         "use strict";
+        // shortcut for sap.m.ButtonType
+        const ButtonType = mobileLibrary.ButtonType;
 
-        return Controller.extend("marketingcampaign.zcrmktmarketingcampaign.controller.Home", {
-            onInit: function () {
-                var oView = this.getView();
-                oView.setBusy(true);
+        // shortcut for sap.m.DialogType
+        const DialogType = mobileLibrary.DialogType;
+        return Controller.extend(
+            "marketingcampaign.zcrmktmarketingcampaign.controller.Home",
+            {
+                formatter: formatter,
+                onInit: async function () {
+                    var oView = this.getView();
+                    oView.setBusy(true);
 
-                const oOwnComp = this.getOwnerComponent();
-                const oDocModel = oOwnComp.getModel("docModel");
-                const oModel = oOwnComp.getModel();
-                const oEmpModel = oOwnComp.getModel("empModel");
-                const uiModel = oOwnComp.getModel("uiModel");
-                const that = this;
+                    const oOwnComp = this.getOwnerComponent();
+                    const oDocModel = oOwnComp.getModel("docModel");
+                    const requestModel = oOwnComp.getModel("requestModel");
+                    const oModel = oOwnComp.getModel();
+                    const uiModel = oOwnComp.getModel("uiModel");
 
-                oDocModel.setProperty("/Document", []);
-                uiModel.setProperty("/show_Edit", false)
-                uiModel.setProperty("/show_Sub", false)
-                uiModel.setProperty("/show_Save", false);
-                uiModel.setProperty("/show_Cancel", false);
-                uiModel.setProperty("/show_Appr", false);
-                uiModel.setProperty("/show_Download", false);
+                    this._setDefaultValue();
 
-                let RequestId, sReqUrl;
-                let createFlg = false;
-                let oStartupParameters = this.getOwnerComponent().getComponentData().startupParameters;
-                let sUrl = "/UserSet('')"
+                    /**
+                        all modes are
+                        new : fore new request, 
+                        draft : draft created request, 
+                        edit : while editing draft request,
+                        read / viewer : to view the request details, 
+                        approver : to approve the request,
+                    */
+                    // setting default mode
+                    // getting loggedin user info
+                    uiModel.setProperty("/ui", {
+                        mode: "new", // based on mode button will be shown
+                        preMode: null, // store the previous mode
+                        role: "Requester", // based on role action will be taken
+                        loginUserInfo: null, // current login user info
+                        requestId: "", // unique id of request
+                        requestStatus: "NEW", // request status
+                    });
+                    uiModel.setProperty("/backup", null); // to keep backup for canel operation
 
-                if (oStartupParameters && oStartupParameters.RequestId) {
+                    try {
+                        let oDataResponse = await this._OdataSynceRead(
+                            "/UserSet('')",
+                            oModel
+                        );
 
-                    RequestId = oStartupParameters.RequestId[0]
-                    sReqUrl = "/RequestSet('" + RequestId + "')"
-                    this.getReqDet(sReqUrl, oModel, oDocModel, oEmpModel, uiModel);
-                    uiModel.setProperty("/title", "Marketing Campaign Request(" + RequestId + ")");
-                }
-                else {
-                    createFlg = true;
-                    uiModel.setProperty("/title", "Marketing Campaign Create Request");
-                }
-                oModel.read(sUrl, {
-                    success: function (oData) {
-                        oEmpModel.setProperty("/empDetail", oData);
-                        if (oData.Role === "Approver") {
-                            uiModel.setProperty("/show_Appr", true);
-                            uiModel.setProperty("/show_Edit", true);
+                        // updaing loggedin user info
+                        uiModel.setProperty(
+                            "/ui/loginUserInfo",
+                            oDataResponse || nul
+                        );
+                        uiModel.setProperty(
+                            "/ui/role",
+                            oDataResponse?.Role || "default user"
+                        );
+
+                        uiModel.refresh();
+
+                        // otptional need to change later
+                        // if (oDataResponse?.Role == "Requester") {
+                        if (uiModel.getProperty("/ui/mode") == "new") {
+                            requestModel.setProperty(
+                                "/empDetail",
+                                oDataResponse
+                            );
+                            requestModel.refresh();
                         }
-                        else if (oData.Role === "Marketing" && createFlg)
-                            uiModel.setProperty("/show_Save", true);
-                        oView.setBusy(false);
-                    },
-                    error: function (oError) {
-                        oView.setBusy(false);
+                    } catch (error) {
+                        MessageBox.error("Faild to load user information.");
                     }
-                });
-            },
 
-            getReqDet(sReqUrl, oModel, oDocModel, oEmpModel, uiModel) {
-                oModel.read(sReqUrl, {
-                    success: function (oData) {
-                        if (oData.Status === "Draft") {
-                            uiModel.setProperty("/show_Edit", true)
-                            uiModel.setProperty("/show_Sub", true)
-                            uiModel.setProperty("/show_Download", true)
+                    let requestId = this._getRequestIdFromURL();
+
+                    await this.fetchRequestDetailsAndUpdateModel(requestId);
+                    oView.setBusy(false);
+                },
+
+                fetchRequestDetailsAndUpdateModel: async function (requestId) {
+                    const oOwnComp = this.getOwnerComponent() || this.getView();
+                    const oDocModel = oOwnComp.getModel("docModel");
+                    const requestModel = oOwnComp.getModel("requestModel");
+                    const oModel = oOwnComp.getModel();
+                    const uiModel = oOwnComp.getModel("uiModel");
+
+                    if (requestId) {
+                        uiModel.setProperty("/ui/requestId", requestId);
+
+                        let requestDetails;
+                        try {
+                            requestDetails = await this._OdataSynceRead(
+                                "/RequestSet('" + requestId + "')",
+                                oModel,
+                                {
+                                    $expand: "Document,Approval",
+                                }
+                            );
+                        } catch (error) {
+                            let message = "";
+                            switch (error?.statusCode) {
+                                case "404":
+                                    message = "The request not found.";
+                                    break;
+                                case "403":
+                                    message =
+                                        "You are not authorize to view this Request.";
+                                    break;
+                                default:
+                                    message =
+                                        "Something wrong with this request ID.";
+                                    break;
+                            }
+                            message += "Going back to Request List Page";
+
+                            MessageBox.error(message, {
+                                title: "Error",
+                                onClose: function () {
+                                    this._crossApplicationNavigation(
+                                        "ZMKTCAMP",
+                                        "displaylist"
+                                    );
+                                }.bind(this),
+                            });
                         }
-                        uiModel.setProperty("/Editable", false);
-                        oDocModel.setProperty("/comment", oData.Remarks)
-                        oDocModel.setProperty("/keyPermitType", oData.PermitType)
 
-                    },
-                    error: function (oError) {
-                        MessageBox.error("Error fetching request details.");
-                        uiModel.setProperty("/Editable", false)
+                        if (requestDetails) {
+                            // keeping backup
+                            uiModel.setProperty("/backup", JSON.parse(JSON.stringify(requestDetails)) );
+                            uiModel.setProperty(
+                                "/ui/requestStatus",
+                                requestDetails.Status
+                            );
+                            let uiModelPropertices = uiModel.getProperty("/ui");
+
+                            // for draft mode
+                            if (requestDetails.Status == "DRF")
+                                this._switchMode("draft"); // changing mode
+                            // for approver mode
+                            else if (
+                                requestDetails.Status === "PGS" &&
+                                uiModelPropertices.role === "Approver"
+                            ) {
+                                this._switchMode("approver");
+                            } else this._switchMode("view");
+
+                            // updating current steps
+                            requestModel.setProperty(
+                                "/keyPermitType",
+                                requestDetails?.PermitType
+                            );
+                            requestModel.setProperty(
+                                "/remarks",
+                                requestDetails?.Remarks
+                            );
+
+                            oDocModel.setProperty(
+                                "/Document",
+                                requestDetails?.Document?.results || []
+                            );
+
+                            // fetch data for requester
+                            let employeDetails = await this._OdataSynceRead(
+                                `/UserSet('${requestDetails?.RequesterId}')`,
+                                oModel
+                            );
+                            if (employeDetails) {
+                                requestModel.setProperty(
+                                    "/empDetail",
+                                    employeDetails
+                                );
+                                requestModel.refresh();
+                            }
+                        }
                     }
-                });
-            },
+                },
 
-            onDownloadFiles(oEvent) {
+                onDownloadFiles(oEvent) {
+                    //Fetching selected Items from table
+                    let aSelectedItems =
+                        this.byId("idProductsTable").getSelectedItems();
 
-                //Fetching selected Items from table
-                var aSelectedItems = this.byId("idProductsTable").getSelectedItems()
-                // if (aSelectedItems.length === 0) {
-                //     MessageToast.show("Please select at least one row to delete.");
-                //     return;
-                // }
-                var that = this;
-                var oDModel =
-                    new sap.ui.model.odata.ODataModel("/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV")
+                    let oModel = this.getView().getModel("docModel");
 
-                var oModel = this.getView().getModel("docModel");
-                // const sPath = "/DocumentSet('FOL50000000000111EXT50000000000237')/$value"
-                const sPath = "/RequestPdfSet('111')/$value"
-                
-                // oDModel.read(sPath, {
-                //     success: function (data, response) {
-                //         const mimeType=response.headers['Content-Type'];
-                //         const fileName=eval(response.headers['content-disposition'].split("=")[1])
-                //         that.downloadDOc(response.body, fileName, mimeType)
-                //         var blob = new Blob([response], { type: mimeType });
+                    aSelectedItems.forEach((element) => {
+                        var sPath = element.getBindingContextPath();
+                        var docItem = oModel.getProperty(sPath);
 
-                //         // Create an Object URL for the Blob and open it in a new tab
-                //         var url = URL.createObjectURL(blob);
-                //         var newTab = window.open(url, '_blank');
+                        if (docItem.FileContent) {
+                            this.downloadDOc(
+                                docItem.FileContent,
+                                docItem.FileName,
+                                docItem.MimeType
+                            );
+                        } else {
+                            $.ajax({
+                                url: `/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/DocumentSet('${docItem.DocId}')/$value`,
+                                type: "GET",
+                                xhrFields: {
+                                    responseType: "blob",
+                                },
+                                success: function (blob) {
+                                    var url = URL.createObjectURL(blob);
+                                    window.open(url);
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error(
+                                        "Error fetching stream:",
+                                        error
+                                    );
+                                },
+                            });
+                        }
+                    });
+                    console.log(oEvent);
+                },
 
-                //     },
-                //     error: function (oError) {
-                //         MessageBox.error("Error downloading file.");
-                //     }
-                // });
-                //looping through the selected items for downloading each file
-
-                aSelectedItems.forEach(element => {
-                    var sPath = element.getBindingContextPath();
-                    var docItem = oModel.getProperty(sPath)
-
-                    if (docItem.FileContent) {
-                        this.downloadDOc(docItem.FileContent, docItem.FileName, docItem.MimeType)
-                    }
-                    else {
-
+                onPressGenPdf: function () {
+                    let reqId = this.getView()
+                        .getModel("uiModel")
+                        .getProperty("/ui/requestId");
+                    if (reqId)
                         $.ajax({
-                            url: "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/DocumentSet('FOL38000000000004EXT50000000000274')/$value",
+                            url: `/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/RequestPdfSet('${reqId}')/$value`,
                             type: "GET",
                             xhrFields: {
-                                responseType: "blob" // Ensures binary data handling
+                                responseType: "blob",
                             },
                             success: function (blob) {
-                                var url = URL.createObjectURL(blob); // Convert blob to URL
-                                window.open(url); // Open the file in a new tab
+                                var url = URL.createObjectURL(blob);
+                                window.open(url);
                             },
                             error: function (xhr, status, error) {
                                 console.error("Error fetching stream:", error);
-                            }
+                            },
                         });
-                    }
+                    else
+                        MessageToast.show(
+                            "Somthing went wrong!! Please refresh the page"
+                        );
+                },
+                onRequestSubmit() {
+                    var oDialog = new sap.m.Dialog({
+                        title: "Confirmation",
+                        type: "Message",
+                        content: new sap.m.Text({
+                            text: "Do you want to submit the request",
+                        }),
+                        beginButton: new sap.m.Button({
+                            text: "OK",
+                            press: function () {
+                                this.onSubmit();
+                                oDialog.close();
+                            }.bind(this),
+                        }),
+                        endButton: new sap.m.Button({
+                            text: "Cancel",
+                            press: function () {
+                                oDialog.close();
+                            },
+                        }),
+                        afterClose: function () {
+                            oDialog.destroy();
+                        },
+                    });
 
-                });
-                console.log(oEvent)
-            },
-            onSubReq() {
-                var oDialog = new sap.m.Dialog({
-                    title: "Confirmation",
-                    type: "Message",
-                    content: new sap.m.Text({ text: "Do you want to submit the request" }),
-                    beginButton: new sap.m.Button({
-                        text: "OK",
-                        press: function () {
-                            this.onSubmit();
-                            oDialog.close();
-                        }.bind(this)
-                    }),
-                    endButton: new sap.m.Button({
-                        text: "Cancel",
-                        press: function () {
-                            oDialog.close();
+                    oDialog.open();
+                },
+
+                onSubmit: async function () {
+                    const uiModel = this.getView().getModel("uiModel");
+                    const oModel = this.getView().getModel();
+                    let requestId = uiModel.getProperty("/ui/requestId");
+                    if (!requestId)
+                        MessageToast.show(
+                            "Somthing wrong please referesh the page"
+                        );
+                    try {
+                        let response = await this._OdataSyncUpdateReqSave(
+                            `/RequestSet('${requestId}')`,
+                            oModel,
+                            { Status: "INI" }
+                        );
+                        if (response) {
+                            MessageBox.success(
+                                `Request ${requestId} Submitted Sucessfully`
+                            );
+                            uiModel.setProperty("/ui/mode", "view");
+                            uiModel.refresh(true);
+                            this.fetchRequestDetailsAndUpdateModel(requestId);
+                        } else
+                            throw new Error(
+                                `Faild to submit request ${requestId}`
+                            );
+                    } catch (error) {
+                        MessageBox.error(error.message);
+                    }
+                },
+                onPressDelete: function (oEvent) {
+                    let oView = this.getView();
+                    let uiModel = oView.getModel("uiModel");
+                    let oModel = oView.getModel();
+                    let requestId = uiModel.getProperty("/ui/requestId");
+                    let that = this;
+
+                    this.openConfirmationDialog(
+                        "Delete Request",
+                        `Are you sure you want to delete Request ID: ${requestId}?`,
+                        async function () {
+                            // onConfirm
+                            try {
+                                let response = await that._OdataSyncDelete(
+                                    `/RequestSet('${requestId}')`,
+                                    oModel
+                                );
+                                let routHistory = that._getRequestIdFromURL();
+                                if (response) {
+                                    that._crossApplicationNavigation(
+                                        "ZMKTCAMP",
+                                        routHistory ? "displaylist" : "Display"
+                                    );
+                                }
+                            } catch (error) {
+                                MessageBox.error(error.message);
+                            }
+                        },
+                        function () {
+                            //skip
                         }
-                    }),
-                    afterClose: function () {
-                        oDialog.destroy();
+                    );
+                },
+                onUploadFiles() {
+                    if (!this._oDialog) {
+                        this._oDialog = sap.ui.xmlfragment(
+                            this.getView().getId(),
+                            "marketingcampaign.zcrmktmarketingcampaign.fragments.uploadFile",
+                            this
+                        );
+                        this.getView().addDependent(this._oDialog);
                     }
-                })
+                    this._oDialog.open();
+                },
+                onEditPress(oEvent) {
+                    this._switchMode("edit");
+                },
+                onPressClear: function (oEvent) {
+                    this._setDefaultValue();
+                },
 
-                oDialog.open();
+                onApproverAction: async function (
+                    oEvent,
+                    actionText,
+                    decisionNote
+                ) {
+                    const oView = this.getView();
 
-            },
+                    const oModel = oView.getModel();
+                    const oUiModel = oView.getModel("uiModel");
+                    const oRequestModel = oView.getModel("requestModel");
 
-            onDownPress() {
+                    let requestId = oUiModel.getProperty("/ui/requestId");
 
-            },
-            onSubmit() {
-                const uiModel = this.getView().getModel("uiModel");
-                const oModel = this.getView().getModel();
-                const oDocModel = this.getView().getModel("docModel")
-                const oEmpModel = this.getView().getModel("empModel")
-                const RequestId = uiModel.getProperty("/RequestId");
-                const that = this;
-                const commt = oDocModel.getProperty("/comment")
-                const perType = oEmpModel.getProperty("/cmboxText");
+                    try {
+                        // uploading doc
+                        let updateDocRes = await this.uploadDocuments(
+                            requestId
+                        );
 
-                const oPayload = {
-                    PermitType: perType,
-                    Remarks: commt,
-                    Status: "Initiated"
+                        if (updateDocRes) {
+                            let payload = {
+                                RequestId: requestId,
+                                Action: actionText,
+                                DecisionNote: decisionNote || "",
+                            };
+                            let actionResponse =
+                                await this._OdataSyncPostReqSave(
+                                    `/ApproveSet`,
+                                    oModel,
+                                    payload
+                                );
 
-                }
-                var sUrl = "/RequestSet('" + RequestId + "')";
-                oModel.update(sUrl, oPayload, {
-                    success: function (oData, response) {
-                        uiModel.setProperty("/show_Edit", false)
-                        uiModel.setProperty("/show_Sub", false)
-                        uiModel.setProperty("/show_Save", false);
-                        uiModel.setProperty("/show_Cancel", false);
-                        uiModel.setProperty("/show_Appr", false);
-                        uiModel.setProperty("/Editable", false);
-                        that.onClear();
-                        MessageBox.success("Request Submitted Sucessfully");
-                    },
-                    error: function (oError) {
-                        MessageBox.error("Could not submit the request");
+                            if (actionResponse) {
+                                MessageToast.show("Request Approved! ");
+                                oUiModel.setProperty(
+                                    "/ui/requestStatus",
+                                    "APR"
+                                );
+
+                                this._switchMode("view");
+                                this.fetchRequestDetailsAndUpdateModel(
+                                    requestId
+                                );
+                            }
+                        }
+                    } catch (error) {
+                        MessageBox.error(error.message);
                     }
-                });
-            },
-            onUploadFiles() {
 
-                if (!this._oDialog) {
-                    this._oDialog = sap.ui.xmlfragment(this.getView().getId(), "marketingcampaign.zcrmktmarketingcampaign.fragments.uploadFile", this);
-                    this.getView().addDependent(this._oDialog);
-                }
-                this._oDialog.open();
-            },
-            onEditPress() {
-                const uiModel = this.getView().getModel("uiModel");
-                const oEmpModel = this.getView().getModel("empModel");
-                uiModel.setProperty("/Editable", true);
-                uiModel.setProperty("/show_Edit", false)
-                uiModel.setProperty("/show_Sub", false)
-                uiModel.setProperty("/show_Save", true);
-                uiModel.setProperty("/show_Cancel", true);
-            },
-            onCancelPress() {
-                const oEmpModel = this.getView().getModel("empModel");
-                const oDocModel = this.getView().getModel("docModel");
-                const uiModel = this.getView().getModel("uiModel");
-                let aDocuments = oDocModel.getProperty("/Document");
-                uiModel.setProperty("/Editable", false);
-                uiModel.setProperty("/show_Edit", true)
-                uiModel.setProperty("/show_Sub", true)
-                uiModel.setProperty("/show_Save", false);
-                uiModel.setProperty("/show_Cancel", false);
-                const filteredData = aDocuments.filter(item => item.status !== "Draft");
-                aDocuments = filteredData;
-            },
-            onClose() {
-                if (this._oDialog) {
-                    this._oDialog.close();
-                }
-                this.byId("comboBox1").setSelectedKey("")
-                this.byId("fileUploader").setValue("")
-            },
-            handleValueChange(oEvent) {
-                const oModel = this.getView().getModel("docModel");
-                oModel.setProperty("/Doc", oEvent.getSource().oFileUpload.files[0])
-            },
-            onDeleteFiles(aSelectedItems) {
-                // if (aSelectedItems.length === 0) {
-                //     MessageToast.show("Please select at least one row to delete.");
-                //     return;
-                // }
-                // const that = this;
-                // const oModel = this.getView().getModel("docModel");
-                // const aDocuments = oModel.getProperty("/Document");
-                // let ind = 0;
-                // //looping each Items and removing from model
-                // aSelectedItems.forEach((element, ind) => {
-                //     var sPath = element.getBindingContextPath();
-                //     var docId = (sPath.split("/")).slice(-1)[0];
-                //     aDocuments.splice(docId - ind, 1);
-                //     ind++;
-                // });
-                // oModel.refresh(true);
-                if (aSelectedItems.length === 0) {
-                    MessageToast.show("Please select at least one row to delete.");
-                    return;
-                }
-                const oModel = this.getView().getModel("docModel");
-                let aDocuments = oModel.getProperty("/Document");
-                const indicesToRemove = aSelectedItems.map(item =>
-                    parseInt(item.getBindingContextPath().split("/").pop(), 10)
-                );
-                aDocuments = aDocuments.filter((_, idx) => !indicesToRemove.includes(idx));
-                oModel.setProperty("/Document", aDocuments);
-                oModel.refresh(true);
-            },
-            onDeleteFile() {
-                //Fetching selected Items from table
-                const oTable = this.byId("idProductsTable");
-                const aSelectedItems = oTable.getSelectedItems();
-                oTable.removeSelections()
-                this.onDeleteFiles(aSelectedItems)
-            },
-            onAddFile(oEvent) {
-                const oEmpModel = this.getView().getModel("empModel");
-                var oDModel =
-                    new sap.ui.model.odata.ODataModel("/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV")
+                    oUiModel.refresh();
+                    oRequestModel.refresh();
+                },
 
-                const oModel = this.getView().getModel("docModel");
-                const oFile = oModel.getProperty("/Doc");
-                const aDocuments = oModel.getProperty("/Document");
-                const oComboTxt = oModel.getProperty("/cmboxText");
-                const that = this;
-                if (!oFile) {
-                    MessageToast.show("Please select a file first.");
-                    return;
-                }
-                if (!oComboTxt) {
-                    MessageToast.show("Please select a Doc Type.");
-                    return;
-                }
+                onPressActions: async function (oEvent) {
+                    let actionText =
+                        oEvent.getSource().getText() == "Approve"
+                            ? "Approve"
+                            : "Reject";
 
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    // let RequestId = "000000000085"; // that.getView().getModel("uiModel").getProperty("/RequestId");
-                    // let sUrl="/RequestSet('"+RequestId+"')/Document"
+                    this.onActionConfirmDialogBox(actionText);
+                },
 
+                onActionConfirmDialogBox: function (actionType) {
+                    let oUiModel = this.getView().getModel("uiModel");
+                    oUiModel.setProperty("/actionText", actionType);
 
-                    const binaryArray = e.target.result;
-                    const blob = new Blob([binaryArray], { type: oFile.type });
-                    const mimeType = oFile.type // Default to binary if type is not available
-                    const oModel = this.getView().getModel("docModel");
-                    const role = oEmpModel.getProperty("/empDetail/Role");
-                    var formData = new FormData();
-                    formData.append("file", oFile);
-                    let oData = {
-                        FileName: oFile.name,
-                        FileContent: blob,
-                        DocType: oComboTxt,
-                        Mimetype: mimeType,
-                        status: "Draft"
-                    };
+                    // if (!this.onApproverActionConfirmDialog) {
+                    let onApproverActionConfirmDialog = new sap.m.Dialog({
+                        type: sap.m.DialogType.Message,
+                        title: actionType,
+                        contentWidth: "500px",
+                        contentHeight: "200px",
+                        content: [
+                            new VerticalLayout({
+                                content: [
+                                    new HorizontalLayout({
+                                        width: "100%",
+                                        content: [
+                                            new Text({
+                                                text: "Note : ",
+                                            }),
+                                        ],
+                                    }),
+                                ],
+                            }),
+                            new TextArea("confirmationNote", {
+                                width: "100%",
+                                height: "120px",
+                                maxLength: 255,
+                                placeholder: "Decision note (Optional)",
+                            }),
+                        ],
+                        beginButton: new Button({
+                            type:
+                                actionType == "Approve"
+                                    ? ButtonType.Accept
+                                    : ButtonType.Reject,
+                            text: actionType,
+                            press: function (oEvent) {
+                                let decisionNote = sap.ui
+                                    .getCore()
+                                    .byId("confirmationNote")
+                                    .getValue(); // getting message
+                                this.onApproverAction(
+                                    oEvent,
+                                    actionType,
+                                    decisionNote
+                                );
+                                onApproverActionConfirmDialog.close();
+                            }.bind(this),
+                        }),
+                        endButton: new Button({
+                            text: "Cancel",
+                            press: function () {
+                                onApproverActionConfirmDialog.close();
+                                sap.ui
+                                    .getCore()
+                                    .byId("confirmationNote")
+                                    .setValue(""); // clear message
+                            }.bind(this),
+                        }),
+                        afterClose: function () {
+                            onApproverActionConfirmDialog.destroy();
+                        },
+                    });
 
+                    // Set model on dialog directly
+                    onApproverActionConfirmDialog.setModel(oUiModel, "uiModel");
 
-                    aDocuments.push(oData);
-                    oModel.refresh(true);
+                    // add dialog as dependent (inherits models automatically)
+                    this.getView().addDependent(onApproverActionConfirmDialog);
+                    // }
+
+                    onApproverActionConfirmDialog.open();
+                },
+
+                onPressCancel(oEvent) {
+                    const oView = this.getView();
+                    const oDocModel = oView.getModel("docModel");
+                    const requestModel = oView.getModel("requestModel");
+                    const uiModel = oView.getModel("uiModel");
+                    const backup = JSON.parse(
+                        JSON.stringify(uiModel.getProperty("/backup"))
+                    ); // deep copy
+
+                    if (!backup?.Document?.results || !backup?.PermitType) {
+                        MessageBox.error(
+                            "Somthing wrong! Faild to rollback please refresh the page."
+                        );
+                        return;
+                    }
+
+                    oDocModel.setProperty("/Document", backup.Document.results); // restore doc
+                    requestModel.setProperty("/remarks", backup.Remarks); // restore remarks
+                    requestModel.setProperty(
+                        "/keyPermitType",
+                        backup.PermitType
+                    ); // restore permittype
+
+                    oDocModel.refresh(true);
+                    requestModel.refresh(true);
+
+                    this._switchMode("draft", null);
+                },
+
+                onClose() {
                     if (this._oDialog) {
                         this._oDialog.close();
                     }
-                    this.byId("comboBox1").setSelectedKey("")
-                    this.byId("fileUploader").setValue("")
-                }.bind(this);
-                reader.readAsArrayBuffer(oFile);
-            },
-            _setComboBoxText(oEvent, sModelName) {
-                const oModel = this.getView().getModel(sModelName);
-                const combTxt = oEvent.getSource().getSelectedItem()?.getProperty("text") || "";
-                oModel.setProperty("/cmboxText", combTxt);
-            },
-            onSelectionChange(oEvent) {
-                this._setComboBoxText(oEvent, "docModel");
-            },
-            onSelectionPermit(oEvent) {
-                this._setComboBoxText(oEvent, "empModel");
-            },
-            downloadDOc: function (binary, fileName, mimeType) {
-                // Decode Base64
+                    this.byId("documentTypeCombobox").setSelectedKey("");
+                    this.byId("fileUploader").setValue("");
+                },
 
-                const blob = new Blob([binary], { type: mimeType });
-
-                // Create download link
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = fileName;
-
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            },
-            onClear() {
-                const oTable = this.byId("idProductsTable");
-                const oEmpModel = this.getView().getModel("empModel");
-                const oDocModel = this.getView().getModel("docModel");
-                oTable.removeSelections()
-                oDocModel.setProperty("/Document", []);
-                this.byId("comboBox1").setSelectedKey("")
-                this.byId("_IDGenComboBox").setSelectedKey("")
-                this.byId("fileUploader").setValue("")
-
-            },
-            onPressSave() {
-                // // Get the current URL
-                // let url = new URL(window.location.href);
-
-                // // Add or update the RequestId parameter
-                // url.searchParams.set('RequestId', '100002');
-
-                // // Reload the page with the updated URL
-                // window.location.href = url.toString();
-
-                // If you want to reload the page with the new parameter, use:
-                // window.location.href = newUrl;
-                // var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                // oRouter.navTo("RouteHome", {
-                //     RequestId: "0000021"
-                // });
-                const oModel = this.getView().getModel();
-                const oDocModel = this.getView().getModel("docModel"); // or use a named model
-                const oEmpModel = this.getView().getModel("empModel");
-                const uiModel = this.getView().getModel("uiModel");
-                const perType = oEmpModel.getProperty("/cmboxText");
-
-                if (!perType) {
-                    MessageToast.show("Please select a Permit Type.");
-                    return;
-                }
-
-                const commt = oDocModel.getProperty("/comment");
-                var that = this
-                let oDoc;
-
-
-
-                const aDocuments = oDocModel.getProperty("/Document");
-                let aDocs = [];
-
-                aDocuments.forEach(element => {
-                    if (element.status === "Draft")
-                        oDoc = {
-                            Filename: element.FileName,
-                            Mimetype: element.Mimetype,
-                            FileContent: element.FileContent,
-                            DocType: element.DocType
-                        }
-                    aDocs.push(oDoc)
-                });
-
-
-                const oPayload = {
-                    PermitType: perType,
-                    Remarks: commt,
-                    Status: "Draft"
-                };
-                // that.createDocuments(aDocs);
-                // oModel.setDeferredGroups(["batchCreate"]);
-                const RequestId = uiModel?.getProperty("/RequestId");
-                that.createDocuments(aDocs)
-                // if (!RequestId) {
-                //     that.createDocuments(aDocs);
-                // }
-                // else {
-                //     oModel.create("/RequestSet", oPayload, {
-                //         success: function (oData, response) {
-                //             that.getView().getModel("empModel").setProperty("/empDetail/Editable", false);
-                //             uiModel.setProperty("/RequestId", oData.RequestId);
-                //             uiModel.setProperty("/title", "Marketing Campaign Request(" + oData.RequestId + ")");
-                //             MessageBox.success("Request created successfully this is your Request Id: " + oData.RequestId);
-                //             if (aDocs.length > 0) {
-                //                 that.createDocuments(aDocs);
-                //             }
-                //             else {
-                //                 uiModel.setProperty("/Editable", false);
-                //                 uiModel.setProperty("/show_Edit", true)
-                //                 uiModel.setProperty("/show_Sub", true)
-                //                 uiModel.setProperty("/show_Save", false);
-                //                 uiModel.setProperty("/show_Cancel", false);
-                //             }
-                //             // MessageToast.show("Request created successfully!");
-                //             // that.byId("comboBox1").setSelectedKey("")
-                //             // oDocModel.setProperty("/comment", "");
-                //             // that.onClear();
-                //         },
-                //         error: function (oError) {
-                //             MessageBox.error("Error creating request.");
-                //         }
-                //     });
-                // }
-
-
-            },
-            createDocuments(aDocs) {
-                const oModel = this.getView().getModel();
-                const uiModel = this.getView().getModel("uiModel");
-                const oDocModel = this.getView().getModel("docModel");
-                const RequestId = uiModel.getProperty("/RequestId");
-                let aPromises = [];
-                aDocs.forEach((element, index) => {
-                    var formData = new FormData();
-                    formData.append("file", element.FileContent, element.Filename);
-                    const csrfToken = oModel.getSecurityToken()
-                    const oHeaders = {
-                        'slug': element.Filename,
-                        'Content-Type': element.Mimetype,
-                        'doctype': element.DocType,
-                        'X-CSRF-Token': csrfToken
+                onFileSelectionChange(oEvent) {
+                    let oDocModel = this.getView().getModel("docModel");
+                    if (oEvent.getParameters().newValue) {
+                        oDocModel.setProperty("/valueState/file", "None");
+                        oDocModel.setProperty(
+                            "/Doc/file",
+                            oEvent.getSource().oFileUpload.files[0]
+                        );
+                    } else {
+                        oDocModel.setProperty("/valueState/file", "Error");
+                        oDocModel.setProperty("/Doc/file", null);
                     }
-                    const promise = new Promise((resolve, reject) => {
-                        $.ajax({
-                        url: "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/RequestSet('"+RequestId+"')/Document",
-                        type: "POST",
-                        headers: oHeaders,
-                        processData: false,
-                        contentType: false,
-                        data: formData,
-                        success: function (oData, Response) {
-                            sap.m.MessageToast.show("File uploaded successfully!");
+                },
+
+                onDeleteFile() {
+                    //Fetching selected Items from table
+                    const oTable = this.byId("idProductsTable");
+                    const aSelectedItems = oTable.getSelectedItems();
+                    oTable.removeSelections();
+                    this.onDeleteFiles(aSelectedItems);
+                },
+                onDeleteFiles(aSelectedItems) {
+                    if (aSelectedItems.length === 0) {
+                        MessageToast.show(
+                            "Please select at least one row to delete."
+                        );
+                        return;
+                    }
+                    const oModel = this.getView().getModel("docModel");
+                    let aDocuments = oModel.getProperty("/Document");
+                    const indicesToRemove = aSelectedItems.map((item) =>
+                        parseInt(
+                            item.getBindingContextPath().split("/").pop(),
+                            10
+                        )
+                    );
+                    aDocuments = aDocuments.filter(
+                        (_, idx) => !indicesToRemove.includes(idx)
+                    );
+                    oModel.setProperty("/Document", aDocuments);
+                    oModel.refresh(true);
+                },
+
+                onAddFile(oEvent) {
+                    const oDocModel = this.getView().getModel("docModel");
+                    const oFile = oDocModel.getProperty("/Doc/file");
+                    const docType = oDocModel.getProperty("/Doc/docType");
+                    const aDocuments = oDocModel.getProperty("/Document");
+
+                    if (!docType) {
+                        MessageToast.show("Please select document type");
+                        oDocModel.setProperty("/valueState/docType", "Error");
+                        oDocModel.refresh(true);
+                        return;
+                    }
+                    if (!oFile) {
+                        MessageToast.show("Please select a file first.");
+                        oDocModel.setProperty("/valueState/file", "Error");
+                        oDocModel.refresh(true);
+                        return;
+                    }
+
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        // let RequestId = "000000000085"; // that.getView().getModel("uiModel").getProperty("/RequestId");
+                        // let sUrl="/RequestSet('"+RequestId+"')/Document"
+
+                        const binaryArray = e.target.result;
+                        const blob = new Blob([binaryArray], {
+                            type: oFile.type,
+                        });
+                        const mimeType = oFile.type; // Default to binary if type is not available
+                        const oDocModel = this.getView().getModel("docModel");
+                        var formData = new FormData();
+                        formData.append("file", oFile);
+                        let oData = {
+                            FileName: oFile.name,
+                            FileContent: blob,
+                            DocType: docType,
+                            Mimetype: mimeType,
+                            status: "Draft",
+                        };
+
+                        aDocuments.push(oData);
+                        oDocModel.refresh(true);
+                        if (this._oDialog) {
+                            this._oDialog.close();
+                        }
+                        this.byId("documentTypeCombobox").setSelectedKey("");
+                        this.byId("fileUploader").setValue("");
+                    }.bind(this);
+                    reader.readAsArrayBuffer(oFile);
+
+                    oDocModel.setProperty("/Doc", {
+                        docType: "",
+                        fileName: "",
+                        file: "",
+                    });
+                    oDocModel.setProperty("/valueState", {
+                        docType: "None",
+                        file: "None",
+                    });
+                    oDocModel.refresh();
+                },
+
+                onSelectionChange(oEvent) {
+                    let oDocModel = this.getView().getModel("docModel");
+                    if (oDocModel.getProperty("/Doc/docType") != "")
+                        oDocModel.setProperty("/valueState/docType", "None");
+                },
+
+                onSelectionPermit(oEvent) {
+                    // this._setComboBoxText(oEvent, "empModel");
+                    oEvent.oSource.setValueState("None");
+                },
+
+                downloadDOc: function (binary, fileName, mimeType) {
+                    // Decode Base64
+                    const blob = new Blob([binary], { type: mimeType });
+
+                    // Create download link
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = fileName;
+
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+
+                onPressSave: async function () {
+                    const oView = this.getView();
+                    oView.setBusy(true);
+                    const oModel = oView.getModel();
+                    const oRequestModel = oView.getModel("requestModel");
+                    const oRequestPropertices = oRequestModel.getProperty("/");
+                    const uiModel = oView.getModel("uiModel");
+                    const uiModelProperties = uiModel.getProperty("/");
+
+                    let requestId =
+                        uiModelProperties?.ui?.requestId ||
+                        this._getRequestIdFromURL();
+
+                    // checking for permit type validation
+                    if (!oRequestPropertices?.keyPermitType) {
+                        MessageToast.show("Please select a Permit Type.");
+                        this.byId("idPermitTypeCombobox").setValueState(
+                            "Error"
+                        );
+                        oView.setBusy(false);
+                        return;
+                    }
+
+                    // preparing payload for permit save
+                    const payload = {
+                        PermitType: oRequestPropertices?.keyPermitType || "",
+                        Remarks: oRequestPropertices?.remarks || "",
+                        Status: "DRF",
+                    };
+
+                    let flagForCreateStatus = false;
+
+                    // updating create request
+                    if (requestId) {
+                        // checking is there any changes or not
+                        if (this._compareRequestDetailsChanges()) {
+                            try {
+                                let response =
+                                    await this._OdataSyncUpdateReqSave(
+                                        `/RequestSet(${requestId})`,
+                                        oModel,
+                                        payload
+                                    );
+                                console.log(response);
+                            } catch (error) {
+                                console.log(error);
+                            }
+                        }
+                    } else {
+                        flagForCreateStatus = true;
+                        // creating new request
+                        try {
+                            let response = await this._OdataSyncPostReqSave(
+                                "/RequestSet",
+                                oModel,
+                                payload
+                            );
+                            requestId = response?.RequestId;
+
+                            if (!requestId)
+                                throw new Error("Faild to create request");
+                            else {
+                                uiModel.setProperty("/ui/requestId", requestId);
+                            }
+                        } catch (error) {
+                            MessageBox.error(error.message);
+                            return;
+                        }
+                    }
+
+                    try {
+                        // uploading doc
+                        let updateDocRes = await this.uploadDocuments(
+                            requestId
+                        );
+
+                        // if everything successfully then chnage to draft mode
+                        if (updateDocRes) {
+                            this._switchMode("draft");
+                        }
+
+                        MessageBox.success(
+                            flagForCreateStatus
+                                ? `Requeset has been created with id ${requestId}.`
+                                : `Requeset ${requestId} has been updated.`,
+                            {
+                                onClose: () => {
+                                    this.fetchRequestDetailsAndUpdateModel(
+                                        requestId
+                                    );
+                                },
+                            }
+                        );
+
+                        oRequestModel.refresh(true);
+                        uiModel.refresh(true);
+                    } catch (error) {
+                        MessageBox.error(error.message);
+                    }
+
+                    oView.setBusy(false);
+                },
+
+                uploadDocuments: async function (requestId) {
+                    const oView = this.getView();
+                    const oModel = oView.getModel();
+                    const oDocModel = oView.getModel("docModel");
+                    const aDocuments = oDocModel.getProperty("/Document");
+                    const csrfToken = oModel.getSecurityToken();
+                    const uiModel = oView.getModel("uiModel");
+
+                    const backup = uiModel.getProperty("/backup");
+
+                    let currentDocId = {};
+
+                    const uploadDocPayloads = [];
+                    aDocuments.forEach((element) => {
+                        if (element?.status === "Draft") {
+                            let formData = new FormData();
+                            formData.append(
+                                "file",
+                                element.FileContent,
+                                element.FileName
+                            );
+                            const oHeaders = {
+                                slug: element.FileName,
+                                "Content-Type": element.Mimetype,
+                                doctype: element.DocType,
+                                "X-CSRF-Token": csrfToken,
+                            };
+                            const promise = new Promise((resolve, reject) => {
+                                $.ajax({
+                                    url:
+                                        "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/RequestSet('" +
+                                        requestId +
+                                        "')/Document",
+                                    type: "POST",
+                                    headers: oHeaders,
+                                    processData: false,
+                                    contentType: false,
+                                    data: formData,
+                                    success: function (oData, Response) {
+                                        resolve(oData);
+                                    },
+                                    error: function (err) {
+                                        reject(err);
+                                    },
+                                });
+                            });
+                            uploadDocPayloads.push(promise);
+                        } else {
+                            // tracking how many doc present in current list
+                            currentDocId[element?.DocId] = true;
+                        }
+                    });
+
+                    let that = this;
+                    backup?.Document?.results.forEach((item) => {
+                        // if backup doc id not present in current doc id then its deleted
+                        if (
+                            !currentDocId[item.DocId] &&
+                            item.DocId != undefined
+                        ) {
+                            aDocuments.push(
+                                that._OdataSyncDelete(
+                                    `/DocumentSet('${item.DocId}')`,
+                                    oModel
+                                )
+                            );
+                        }
+                    });
+
+                    try {
+                        let responses = await Promise.all(uploadDocPayloads);
+                        return responses;
+                    } catch (error) {
+                        throw new Error("Faild to update the documetns");
+                    }
+                },
+
+                _OdataSynceRead: async function (
+                    sPath,
+                    oModel,
+                    parameter = {}
+                ) {
+                    return new Promise((resolve, reject) => {
+                        oModel.read(sPath, {
+                            urlParameters: parameter,
+                            success: function (oData) {
+                                resolve(oData);
+                            },
+                            error: function (oError) {
+                                reject(oError);
+                            },
+                        });
+                    });
+                },
+
+                _OdataSyncUpdateReqSave: async function (
+                    sPath,
+                    oModel,
+                    payload
+                ) {
+                    return new Promise((resolve, reject) => {
+                        oModel.update(sPath, payload, {
+                            success: function (oData, response) {
+                                resolve(oData || response);
+                            },
+                            error: function (oError) {
+                                reject(oError);
+                            },
+                        });
+                    });
+                },
+                _OdataSyncPostReqSave: async function (sPath, oModel, payload) {
+                    return new Promise((resolve, reject) => {
+                        oModel.create(sPath, payload, {
+                            success: function (oData, response) {
+                                resolve(oData);
+                            },
+                            error: function (oError) {
+                                reject(oError);
+                            },
+                        });
+                    });
+                },
+
+                _OdataSyncDelete: async function (sPath, oModel) {
+                    return new Promise((resolve, reject) => {
+                        oModel.remove(sPath, {
+                            success: function (oData, response) {
+                                resolve(oData || response);
+                            },
+                            error: function (oError) {
+                                reject(oError);
+                            },
+                        });
+                    });
+                },
+
+                _getRequestIdFromURL: function () {
+                    let oStartupParameters =
+                        this.getOwnerComponent().getComponentData()
+                            .startupParameters;
+
+                    // let createFlg = false;
+                    // let sUrl = "/UserSet('')";
+
+                    // checking for draft or approval
+                    if (
+                        oStartupParameters &&
+                        oStartupParameters?.RequestId?.[0]
+                    )
+                        return oStartupParameters.RequestId[0];
+                    else return null;
+                },
+
+                _compareRequestDetailsChanges: function () {
+                    const backeup = this.getView()
+                        .getModel("uiModel")
+                        .getProperty("/backup");
+                    const currentData = this.getView()
+                        .getModel("requestModel")
+                        .getProperty("/");
+
+                    if (backeup && currentData)
+                        return !(
+                            backeup?.Remarks ==
+                                currentData?.remarks?.requester &&
+                            backeup?.PermitType == currentData?.keyPermitType
+                        );
+                    return true;
+                },
+
+                _switchMode: function (mode, preMode) {
+                    const oUiModel = this.getView().getModel("uiModel");
+                    // storeing the prev mode
+                    oUiModel.setProperty(
+                        "/ui/preMode",
+                        preMode ? preMode : oUiModel.getProperty("/ui/mode")
+                    );
+                    // updating the current mode
+                    oUiModel.setProperty("/ui/mode", mode);
+                    oUiModel.refresh(true);
+                },
+
+                _crossApplicationNavigation: function (
+                    sementicObject,
+                    action,
+                    params = {}
+                ) {
+                    if (!sementicObject || !action) return;
+
+                    let CrossApplicationNavigation =
+                        sap.ushell.Container.getService(
+                            "CrossApplicationNavigation"
+                        );
+                    CrossApplicationNavigation.toExternal({
+                        target: {
+                            semanticObject: sementicObject,
+                            action: action,
                         },
-                        error: function (err) {
-                            console.error("Upload failed:", err);
-                        }
+                        params: params,
+                    }).then(function (sHref) {
+                        // Place sHref somewhere in the DOM
                     });
+                },
+
+                _setDefaultValue: function () {
+                    const oOwnComp = this.getOwnerComponent() || this.getView();
+                    const oDocModel = oOwnComp.getModel("docModel");
+                    const requestModel = oOwnComp.getModel("requestModel");
+
+                    this._setDefaultDocModel();
+                    // setting default value for remarks
+                    requestModel.setProperty("/remarks", "");
+                    requestModel.setProperty("/keyPermitType", "");
+
+                    // clear the value state
+                    this.byId("idPermitTypeCombobox").setValueState("None");
+                    requestModel.refresh(true);
+                },
+
+                _setDefaultDocModel: function () {
+                    const oOwnComp = this.getOwnerComponent() || this.getView();
+                    const oDocModel = oOwnComp.getModel("docModel");
+                    // setting default value for docs
+                    oDocModel.setProperty("/", {
+                        Document: [],
+                        Doc: {
+                            docType: "",
+                            fileName: "",
+                            file: "",
+                        },
+                        valueState: {
+                            docType: "None",
+                            file: "None",
+                        },
                     });
-                    aPromises.push(promise);
+                    oDocModel.refresh(true);
+                },
 
-                });
-                Promise.all(aPromises).then(() => {
+                openConfirmationDialog: function (
+                    sTitle,
+                    sMessage,
+                    fnOnConfirm,
+                    fnOnCancel
+                ) {
+                    const oDialog = new sap.m.Dialog({
+                        title: sTitle || "Confirmation",
+                        type: "Message",
+                        content: new sap.m.Text({ text: sMessage }),
+                        beginButton: new sap.m.Button({
+                            text: "Yes",
+                            type: sap.m.ButtonType.Emphasized,
+                            press: function () {
+                                oDialog.close();
+                                if (typeof fnOnConfirm === "function") {
+                                    fnOnConfirm();
+                                }
+                            },
+                        }),
+                        endButton: new sap.m.Button({
+                            text: "No",
+                            press: function () {
+                                oDialog.close();
+                                if (typeof fnOnCancel === "function") {
+                                    fnOnCancel();
+                                }
+                            },
+                        }),
+                        afterClose: function () {
+                            oDialog.destroy();
+                        },
+                    });
 
-                    uiModel.setProperty("/Editable", false);
-                    uiModel.setProperty("/show_Edit", true)
-                    uiModel.setProperty("/show_Sub", true)
-                    uiModel.setProperty("/show_Save", false);
-                    uiModel.setProperty("/show_Cancel", false);
-                    oDocModel.setProperty("/comment", "");
-
-                }).catch((error) => {
-                    MessageBox.error("Error creating documents.");
-                });
-
-            },
-            onAppReq(oEvent) {
-                // var oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                // oRouter.navTo("RouteHome", {
-                //     RequestId: "0000021"
-                // });
-                const clcButt = oEvent.getSource().getProperty("text")
-                if (clcButt === "Approve Request") {
-                    const Action = "X"
-                }
-                else {
-                    const Action = ""
-                }
-                const oModel = this.getView().getModel();
-                const oDocModel = this.getView().getModel("docModel");
-                const commt = oDocModel.getProperty("/comment");
-                var that = this
-                const aDocuments = oDocModel.getProperty("/Document");
-                let aDocs = [];
-                let oStartupParameters = this.getOwnerComponent().getComponentData().startupParameters;
-                if (oStartupParameters && oStartupParameters.RequestId) {
-                    const RequestId = oStartupParameters.RequestId[0]
-                }
-                else {
-                    MessageBox.error("Error creating request.");
-                }
-                aDocuments.forEach(element => {
-                    if (element?.role && element.role === "Approver") {
-                        let oDoc = {
-                            Filename: element.FileName,
-                            Mimetype: element.mimeType,
-                            FileContent: element.FileContent,
-                            DocType: element.DocType
-                        }
-                        aDocs.push(oDoc)
-                    }
-                });
-                const oPayload = {
-                    RequestId: RequestId,
-                    Action: Action,
-                    Remark: commt,
-                    Document: aDocs
-                };
-                this.onCreateApproval(oPayload)
-
-
-
-            },
-            onCreateApproval(oPayload) {
-                const oModel = this.getView().getModel()
-                oModel.create("/RequestSet", oPayload, {
-                    success: function (oData, response) {
-                        MessageToast.show("Request Approved successfully!");
-
-                    },
-                    error: function (oError) {
-                        MessageBox.error("Error creating request.");
-                    }
-                });
-
+                    oDialog.open();
+                },
             }
-        });
-    });
+        );
+    }
+);
