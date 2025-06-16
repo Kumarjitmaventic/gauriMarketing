@@ -256,7 +256,7 @@
                         </Column>
                     </columns>
                     <items>
-                        <ColumnListItem vAlign="Middle">
+                        <ColumnListItem vAlign="Middle" >
                             <cells>
                                 <Text text="{docModel>FileName}" />
                                 <Text text="{path: 'docModel>DocType', formatter: '.formatter.getDocTypeText'}" />

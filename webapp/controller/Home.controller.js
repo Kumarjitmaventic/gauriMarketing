@@ -640,6 +640,7 @@ sap.ui.define(
                  * Handles delete file button press for selected files in the table.
                  */
                 onDeleteFile() {
+
                     //Fetching selected Items from table
                     const oTable = this.byId("idProductsTable");
                     const aSelectedItems = oTable.getSelectedItems();
@@ -648,8 +649,9 @@ sap.ui.define(
                 },
 
                  /**
-                 * Deletes selected files from the document model.
-                 */
+                  * 
+                  * Deletes selected files from the document model.
+                  */
                 onDeleteFiles(aSelectedItems) {
                     if (aSelectedItems.length === 0) {
                         MessageToast.show(
@@ -657,17 +659,52 @@ sap.ui.define(
                         );
                         return;
                     }
+
                     const oModel = this.getView().getModel("docModel");
+                    const uiModel= this.getView().getModel("uiModel");
+                    const mode=uiModel.getProperty("/ui/mode");
+
+                    
+
+                    
                     let aDocuments = oModel.getProperty("/Document");
-                    const indicesToRemove = aSelectedItems.map((item) =>
-                        parseInt(
-                            item.getBindingContextPath().split("/").pop(),
-                            10
-                        )
-                    );
+
+                    const removeIndexMap= {};
+                    let Files=[]
+
+                    //Looping through selected items and retrieve the index to be removed
+                    aSelectedItems.forEach(element => {
+                        let sPath=element.getBindingContextPath();
+                        let doucment=oModel.getProperty(sPath);
+                        if(mode === "approver" ) {
+                            if(!doucment.DocId){
+                                removeIndexMap[parseInt(
+                                element.getBindingContextPath().split("/").pop(),
+                                10
+                            )] = true;
+                            }
+                            else{
+                                Files.push(doucment.FileName);
+                            }
+
+                        }
+                        else{
+                            removeIndexMap[parseInt(
+                                element.getBindingContextPath().split("/").pop(),
+                                10
+                            )] = true;
+                        }
+                    });
+
+                    
                     aDocuments = aDocuments.filter(
-                        (_, idx) => !indicesToRemove.includes(idx)
+                        (_, idx) => !removeIndexMap[idx]
                     );
+
+                    //if files are uploaded by the requester then it cannot be deleted
+                    if(Files){
+                        MessageBox.information("'"+Files.join("', '") + "' files cannot be deleted as they are uploaded by the Requester");
+                    }
                     oModel.setProperty("/Document", aDocuments);
                     oModel.refresh(true);
                 },
