@@ -42,7 +42,6 @@ sap.ui.define(
                     oView.setBusy(true);
 
                     const oOwnComp = this.getOwnerComponent();
-                    const oDocModel = oOwnComp.getModel("docModel");
                     const requestModel = oOwnComp.getModel("requestModel");
                     const oModel = oOwnComp.getModel();
                     const uiModel = oOwnComp.getModel("uiModel");
@@ -1017,6 +1016,7 @@ sap.ui.define(
                             docType: "None",
                             file: "None",
                         },
+                        fileType:"pdf,xlsx"
                     });
                     oDocModel.refresh(true);
                 },
