@@ -24,7 +24,7 @@
                         
                         { path: 'uiModel>/ui/requestStatus' },
                         { path: 'uiModel>/ui/requestId' },
-                        { path: 'requestModel>/' }
+                        { path: 'requestModel>/updatedAt' }
                     ],
                     formatter: '.formatter.getPageTitle'
                 }"
