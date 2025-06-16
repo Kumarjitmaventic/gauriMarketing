@@ -37,6 +37,8 @@ sap.ui.define(
             "marketingcampaign.zcrmktmarketingcampaign.controller.Home",
             {
                 formatter: formatter,
+
+
                 onInit: async function () {
                     var oView = this.getView();
                     oView.setBusy(true);
@@ -69,12 +71,13 @@ sap.ui.define(
                     uiModel.setProperty("/backup", null); // to keep backup for canel operation
 
                     try {
+                        // Fetch user info
                         let oDataResponse = await this._OdataSynceRead(
                             "/UserSet('')",
                             oModel
                         );
 
-                        // updaing loggedin user info
+                         // Update user info and role in UI model
                         uiModel.setProperty(
                             "/ui/loginUserInfo",
                             oDataResponse || nul
@@ -86,8 +89,7 @@ sap.ui.define(
 
                         uiModel.refresh();
 
-                        // otptional need to change later
-                        // if (oDataResponse?.Role == "Requester") {
+                        // If new mode, set employee details in request model
                         if (uiModel.getProperty("/ui/mode") == "new") {
                             requestModel.setProperty(
                                 "/empDetail",
@@ -99,12 +101,18 @@ sap.ui.define(
                         MessageBox.error("Faild to load user information.");
                     }
 
+                     // Get requestId from URL/startup parameters
                     let requestId = this._getRequestIdFromURL();
 
+                    // Fetch request details if requestId exists
                     await this.fetchRequestDetailsAndUpdateModel(requestId);
                     oView.setBusy(false);
                 },
 
+                /**
+                 * Fetches request details and updates models accordingly.
+                 * Handles error and navigation if request not found.
+                 */
                 fetchRequestDetailsAndUpdateModel: async function (requestId) {
                     const oOwnComp = this.getOwnerComponent() || this.getView();
                     const oDocModel = oOwnComp.getModel("docModel");
@@ -117,6 +125,7 @@ sap.ui.define(
 
                         let requestDetails;
                         try {
+                            // Read request details with expanded Document and Approval
                             requestDetails = await this._OdataSynceRead(
                                 "/RequestSet('" + requestId + "')",
                                 oModel,
@@ -124,7 +133,9 @@ sap.ui.define(
                                     $expand: "Document,Approval",
                                 }
                             );
-                        } catch (error) {
+                        } 
+                        // if request details not found return to list page
+                        catch (error) {
                             let message = "";
                             switch (error?.statusCode) {
                                 case "404":
@@ -203,6 +214,11 @@ sap.ui.define(
                     }
                 },
 
+                /**
+                 * Handles file download for selected items in the table.
+                 * Downloads directly if FileContent is present, otherwise fetches from OData.
+                 */
+
                 onDownloadFiles(oEvent) {
                     //Fetching selected Items from table
                     let aSelectedItems =
@@ -213,7 +229,7 @@ sap.ui.define(
                     aSelectedItems.forEach((element) => {
                         var sPath = element.getBindingContextPath();
                         var docItem = oModel.getProperty(sPath);
-
+                        // If FileContent is available, download directly
                         if (docItem.FileContent) {
                             this.downloadDOc(
                                 docItem.FileContent,
@@ -221,6 +237,7 @@ sap.ui.define(
                                 docItem.MimeType
                             );
                         } else {
+                            // If FileContent is not available, fetch from OData service
                             $.ajax({
                                 url: `/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/DocumentSet('${docItem.DocId}')/$value`,
                                 type: "GET",
@@ -243,10 +260,15 @@ sap.ui.define(
                     console.log(oEvent);
                 },
 
+                /**
+                 * Generates and downloads the PDF for the current request status.
+                 */
+
                 onPressGenPdf: function () {
                     let reqId = this.getView()
                         .getModel("uiModel")
                         .getProperty("/ui/requestId");
+                    // checking for request id and then fetching the pdf
                     if (reqId)
                         $.ajax({
                             url: `/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/RequestPdfSet('${reqId}')/$value`,
@@ -267,6 +289,10 @@ sap.ui.define(
                             "Somthing went wrong!! Please refresh the page"
                         );
                 },
+
+                /**
+                 * this function is used for confirmation dialog box
+                 */
                 onRequestSubmit() {
                     var oDialog = new sap.m.Dialog({
                         title: "Confirmation",
@@ -294,6 +320,10 @@ sap.ui.define(
 
                     oDialog.open();
                 },
+                
+                /**
+                 * Submits the request by updating its status and refreshing the view.
+                 */
 
                 onSubmit: async function () {
                     const uiModel = this.getView().getModel("uiModel");
@@ -324,6 +354,10 @@ sap.ui.define(
                         MessageBox.error(error.message);
                     }
                 },
+
+                 /**
+                 * Handles delete button press, opens confirmation dialog and deletes request if confirmed.
+                 */
                 onPressDelete: function (oEvent) {
                     let oView = this.getView();
                     let uiModel = oView.getModel("uiModel");
@@ -357,6 +391,10 @@ sap.ui.define(
                         }
                     );
                 },
+
+                /**
+                 * Opens the upload file dialog fragment.
+                 */
                 onUploadFiles() {
                     if (!this._oDialog) {
                         this._oDialog = sap.ui.xmlfragment(
@@ -368,13 +406,25 @@ sap.ui.define(
                     }
                     this._oDialog.open();
                 },
+
+                /**
+                 * Switches to edit mode.
+                 */
                 onEditPress(oEvent) {
                     this._switchMode("edit");
                 },
+
+                /**
+                 * Clears the form and resets to default values.
+                 */
                 onPressClear: function (oEvent) {
                     this._setDefaultValue();
                 },
 
+
+                /**
+                 * Handles approver actions (approve/reject) with optional decision note.
+                 */
                 onApproverAction: async function (
                     oEvent,
                     actionText,
@@ -429,6 +479,9 @@ sap.ui.define(
                     oRequestModel.refresh();
                 },
 
+                 /**
+                 * Handles approve/reject button press and opens confirmation dialog.
+                 */
                 onPressActions: async function (oEvent) {
                     let actionText =
                         oEvent.getSource().getText() == "Approve"
@@ -438,6 +491,10 @@ sap.ui.define(
                     this.onActionConfirmDialogBox(actionText);
                 },
 
+
+                /**
+                 * Opens a dialog for approver to enter a decision note.
+                 */
                 onActionConfirmDialogBox: function (actionType) {
                     let oUiModel = this.getView().getModel("uiModel");
                     oUiModel.setProperty("/actionText", actionType);
@@ -512,6 +569,10 @@ sap.ui.define(
                     onApproverActionConfirmDialog.open();
                 },
 
+
+                 /**
+                 * Cancels the current edit and restores data from backup.
+                 */
                 onPressCancel(oEvent) {
                     const oView = this.getView();
                     const oDocModel = oView.getModel("docModel");
@@ -541,6 +602,9 @@ sap.ui.define(
                     this._switchMode("draft", null);
                 },
 
+                /**
+                 * Closes the upload dialog and resets file input fields.
+                 */
                 onClose() {
                     if (this._oDialog) {
                         this._oDialog.close();
@@ -549,6 +613,9 @@ sap.ui.define(
                     this.byId("fileUploader").setValue("");
                 },
 
+                /**
+                 * Handles file selection change in the upload dialog.
+                 */
                 onFileSelectionChange(oEvent) {
                     let oDocModel = this.getView().getModel("docModel");
                     if (oEvent.getParameters().newValue) {
@@ -563,6 +630,10 @@ sap.ui.define(
                     }
                 },
 
+
+                /**
+                 * Handles delete file button press for selected files in the table.
+                 */
                 onDeleteFile() {
                     //Fetching selected Items from table
                     const oTable = this.byId("idProductsTable");
@@ -570,6 +641,10 @@ sap.ui.define(
                     oTable.removeSelections();
                     this.onDeleteFiles(aSelectedItems);
                 },
+
+                 /**
+                 * Deletes selected files from the document model.
+                 */
                 onDeleteFiles(aSelectedItems) {
                     if (aSelectedItems.length === 0) {
                         MessageToast.show(
@@ -592,6 +667,9 @@ sap.ui.define(
                     oModel.refresh(true);
                 },
 
+                /**
+                 * Adds a new file to the document model after reading its content.
+                 */
                 onAddFile(oEvent) {
                     const oDocModel = this.getView().getModel("docModel");
                     const oFile = oDocModel.getProperty("/Doc/file");
@@ -654,17 +732,27 @@ sap.ui.define(
                     oDocModel.refresh();
                 },
 
+                /**
+                 * Handles selection change for document type combo box.
+                 */
+
                 onSelectionChange(oEvent) {
                     let oDocModel = this.getView().getModel("docModel");
                     if (oDocModel.getProperty("/Doc/docType") != "")
                         oDocModel.setProperty("/valueState/docType", "None");
                 },
 
+                /**
+                 * Handles selection change for permit type combo box.
+                 */
                 onSelectionPermit(oEvent) {
                     // this._setComboBoxText(oEvent, "empModel");
                     oEvent.oSource.setValueState("None");
                 },
 
+                /**
+                 * Downloads a document given its binary content, file name, and mime type.
+                 */
                 downloadDOc: function (binary, fileName, mimeType) {
                     // Decode Base64
                     const blob = new Blob([binary], { type: mimeType });
@@ -679,6 +767,10 @@ sap.ui.define(
                     document.body.removeChild(link);
                 },
 
+                 /**
+                 * Saves the request and uploads documents.
+                 * Handles both create and update scenarios.
+                 */
                 onPressSave: async function () {
                     const oView = this.getView();
                     oView.setBusy(true);
@@ -782,6 +874,10 @@ sap.ui.define(
                     oView.setBusy(false);
                 },
 
+                 /**
+                 * Uploads all draft documents for the given requestId.
+                 * Returns a promise that resolves when all uploads are complete.
+                 */
                 uploadDocuments: async function (requestId) {
                     const oView = this.getView();
                     const oModel = oView.getModel();
@@ -859,6 +955,9 @@ sap.ui.define(
                     }
                 },
 
+                /**
+                 * Reads OData entity and returns a promise.
+                 */
                 _OdataSynceRead: async function (
                     sPath,
                     oModel,
@@ -877,6 +976,9 @@ sap.ui.define(
                     });
                 },
 
+                /**
+                 * Updates OData entity and returns a promise.
+                 */
                 _OdataSyncUpdateReqSave: async function (
                     sPath,
                     oModel,
@@ -893,6 +995,10 @@ sap.ui.define(
                         });
                     });
                 },
+
+                /**
+                 * Creates OData entity and returns a promise.
+                 */
                 _OdataSyncPostReqSave: async function (sPath, oModel, payload) {
                     return new Promise((resolve, reject) => {
                         oModel.create(sPath, payload, {
@@ -906,6 +1012,10 @@ sap.ui.define(
                     });
                 },
 
+
+                /**
+                 * Deletes OData entity and returns a promise.
+                 */
                 _OdataSyncDelete: async function (sPath, oModel) {
                     return new Promise((resolve, reject) => {
                         oModel.remove(sPath, {
@@ -919,6 +1029,11 @@ sap.ui.define(
                     });
                 },
 
+
+                 /**
+                 * Extracts the RequestId from the startup parameters in the component data.
+                 * Returns the RequestId if present, otherwise returns null.
+                 */
                 _getRequestIdFromURL: function () {
                     let oStartupParameters =
                         this.getOwnerComponent().getComponentData()
@@ -936,6 +1051,10 @@ sap.ui.define(
                     else return null;
                 },
 
+
+                /**
+                 * Compares current request details with backup to check for changes.
+                 */
                 _compareRequestDetailsChanges: function () {
                     const backeup = this.getView()
                         .getModel("uiModel")
@@ -953,6 +1072,9 @@ sap.ui.define(
                     return true;
                 },
 
+                /**
+                 * Switches the UI mode and stores the previous mode.
+                 */
                 _switchMode: function (mode, preMode) {
                     const oUiModel = this.getView().getModel("uiModel");
                     // storeing the prev mode
@@ -965,6 +1087,9 @@ sap.ui.define(
                     oUiModel.refresh(true);
                 },
 
+                /**
+                 * Navigates to another Fiori app or page using cross-application navigation.
+                 */
                 _crossApplicationNavigation: function (
                     sementicObject,
                     action,
@@ -987,6 +1112,9 @@ sap.ui.define(
                     });
                 },
 
+                 /**
+                 * Sets default values for the form and document model.
+                 */
                 _setDefaultValue: function () {
                     const oOwnComp = this.getOwnerComponent() || this.getView();
                     const oDocModel = oOwnComp.getModel("docModel");
@@ -1002,6 +1130,9 @@ sap.ui.define(
                     requestModel.refresh(true);
                 },
 
+                /**
+                 * Sets default values for the document model.
+                 */
                 _setDefaultDocModel: function () {
                     const oOwnComp = this.getOwnerComponent() || this.getView();
                     const oDocModel = oOwnComp.getModel("docModel");
@@ -1022,6 +1153,9 @@ sap.ui.define(
                     oDocModel.refresh(true);
                 },
 
+                /**
+                 * Opens a generic confirmation dialog with customizable title, message, and callbacks.
+                 */
                 openConfirmationDialog: function (
                     sTitle,
                     sMessage,

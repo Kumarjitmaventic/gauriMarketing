@@ -218,7 +218,6 @@
                     mode="MultiSelect"
                     inset="false"
                     items="{docModel>/Document}"
-                    showRowCount="10"
                 >
                     <headerToolbar>
                         <OverflowToolbar>
