@@ -90,6 +90,9 @@
       "empModel": {
         "type": "sap.ui.model.json.JSONModel"
       },
+      "requestModel": {
+        "type": "sap.ui.model.json.JSONModel"
+      },
       "uiModel": {
         "type": "sap.ui.model.json.JSONModel"
       }

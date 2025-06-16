@@ -1,35 +1,37 @@
 <core:FragmentDefinition xmlns="sap.m"
     xmlns:core="sap.ui.core"
     xmlns:u="sap.ui.unified">
-    <Dialog title="File Upload" id="uploadDialog" class = "SapUiMargin" contentWidth="30%" contentHeight="25%">
+    <Dialog title="Select Attachment" id="uploadDialog" class = "SapUiMargin" contentWidth="200px" contentHeight="150px">
+        
         <VBox class='sapUiSmallMarginBegin sapUiSmallMarginTop'>
-            <Label text="Choose a File:" labelFor="file uploader"/>
-            <u:FileUploader id="fileUploader" name="myFileUpload" uploadComplete="handleUploadComplete" change="handleValueChange" multiple="false" />
-        </VBox>
-        <VBox class='sapUiSmallMarginBegin sapUiSmallMarginTop'>
-            <Label text="Select a Doc Type:" labelFor="comboBox"/>
-            <ComboBox id="comboBox1"  selectionChange="onSelectionChange" visible="{=${empModel>/empDetail/Role}==='Marketing'?true:false}" >
+            <Label text="Document Type :" labelFor="comboBox" required="true"/>
+            <ComboBox required="true" id="documentTypeCombobox" valueState="{docModel>/valueState/docType}" selectedKey="{docModel>/Doc/docType}" selectionChange="onSelectionChange" visible="{=${uiModel>/ui/role}==='Requester'?true:false}" >
                 <items>
-                    <core:Item key="1" text="Offer visual"/>
-                    <core:Item key="2" text="Price list excel file"/>
-                    <core:Item key="3" text="Prize list excel file"/>
-                    <core:Item key="4" text="Prize invoices"/>
-                    <core:Item key="5" text="Coupon design"/>
-                    <core:Item key="6" text="Charge cost center"/>
+                    <core:Item key="OFV" text="Offer visual"/>
+                    <core:Item key="PCL" text="Price list excel file"/>
+                    <core:Item key="PZL" text="Prize list excel file"/>
+                    <core:Item key="PZI" text="Prize invoices"/>
+                    <core:Item key="COD" text="Coupon design"/>
+                    <core:Item key="CCC" text="Charge cost center"/>
                 </items>
             </ComboBox>
-            <ComboBox id="comboBox2"  selectionChange="onSelectionChange" visible="{=${empModel>/empDetail/Role}==='Marketing'?false:true}">
+            <ComboBox id="comboBox2"  selectionChange="onSelectionChange" valueState="{docModel>/valueState/docType}" selectedKey="{docModel>/Doc/docType}" visible="{=${uiModel>/ui/role}==='Requester'?false:true}">
                 <items>
-                    <core:Item key="7" text="Permit copy"/>
-                    <core:Item key="8" text="Payment reciept"/>
+                    <core:Item key="PEC" text="Permit copy"/>
+                    <core:Item key="PAR" text="Payment receipt"/>
                 </items>
             </ComboBox>
         </VBox>
+
+        <VBox class='sapUiSmallMarginBegin sapUiSmallMarginTop' >
+            <Label text="Choose a File:" labelFor="file uploader" required="true"/>
+            <u:FileUploader enabled="{= ${docModel>/Doc/docType} === ''? false : true }" valueState="{docModel>/valueState/file}"  id="fileUploader" name="myFileUpload" uploadComplete="handleUploadComplete" change="onFileSelectionChange" multiple="false" />
+        </VBox>
+
         <beginButton>
             <Button text="Add" press="onAddFile"/>
         </beginButton>
         <endButton>
-
             <Button text="Close" press="onClose"/>
         </endButton>
     </Dialog>
