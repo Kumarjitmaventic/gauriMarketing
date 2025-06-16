@@ -408,7 +408,8 @@ sap.ui.define(
                                 );
 
                             if (actionResponse) {
-                                MessageToast.show("Request Approved! ");
+                                let message = `Request successfully ${actionText == "Approve" ? "Approved" : "Rejected"}.`
+                                MessageToast.show(message);
                                 oUiModel.setProperty(
                                     "/ui/requestStatus",
                                     "APR"
