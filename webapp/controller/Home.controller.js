@@ -702,7 +702,7 @@ sap.ui.define(
                     );
 
                     //if files are uploaded by the requester then it cannot be deleted
-                    if(Files){
+                    if(Files && Files.length > 0 && mode === "approver"){
                         MessageBox.information("'"+Files.join("', '") + "' files cannot be deleted as they are uploaded by the Requester");
                     }
                     oModel.setProperty("/Document", aDocuments);
@@ -852,7 +852,7 @@ sap.ui.define(
                             try {
                                 let response =
                                     await this._OdataSyncUpdateReqSave(
-                                        `/RequestSet(${requestId})`,
+                                        `/RequestSet('${requestId}')`,
                                         oModel,
                                         payload
                                     );
@@ -974,21 +974,21 @@ sap.ui.define(
                     });
 
                     let that = this;
+                    let deletedItemPayload = {
+                        "RequestId": requestId,
+                        "DocList":[
+
+                        ]
+                    };
                     backup?.Document?.results.forEach((item) => {
                         // if backup doc id not present in current doc id then its deleted
                         if (
                             !currentDocId[item.DocId] &&
                             item.DocId != undefined
-                        ) {
-                            aDocuments.push(
-                                that._OdataSyncDelete(
-                                    `/DocumentSet('${item.DocId}')`,
-                                    oModel
-                                )
-                            );
-                        }
+                        )
+                            deletedItemPayload.DocList.push({"DocId":item.DocId});
                     });
-
+                    uploadDocPayloads.push(that._OdataSyncPostReqSave("/DeletionDocumentSet",oModel,deletedItemPayload));
                     try {
                         let responses = await Promise.all(uploadDocPayloads);
                         return responses;
