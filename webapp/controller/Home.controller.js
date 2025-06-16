@@ -192,6 +192,11 @@ sap.ui.define(
                                 "/remarks",
                                 requestDetails?.Remarks
                             );
+                            if(requestDetails.Status === "APR" || requestDetails.Status === "REJ")
+                                requestModel.setProperty(
+                                    "/updatedAt",
+                                    requestDetails?.UpdatedAt
+                                );
 
                             oDocModel.setProperty(
                                 "/Document",
@@ -1124,6 +1129,7 @@ sap.ui.define(
                     // setting default value for remarks
                     requestModel.setProperty("/remarks", "");
                     requestModel.setProperty("/keyPermitType", "");
+                    requestModel.setProperty("/updatedAt","");
 
                     // clear the value state
                     this.byId("idPermitTypeCombobox").setValueState("None");
