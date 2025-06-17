@@ -157,7 +157,7 @@ sap.ui.define(
                                 onClose: function () {
                                     this._crossApplicationNavigation(
                                         "ZMKTCAMP",
-                                        "displaylist"
+                                        "requestlist"
                                     );
                                 }.bind(this),
                             });
@@ -387,7 +387,7 @@ sap.ui.define(
                                 if (response) {
                                     that._crossApplicationNavigation(
                                         "ZMKTCAMP",
-                                        routHistory ? "displaylist" : "Display"
+                                        routHistory ? "requestlist" : "Display"
                                     );
                                 }
                             } catch (error) {
