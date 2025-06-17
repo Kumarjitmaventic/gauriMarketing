@@ -231,6 +231,9 @@ sap.ui.define(
 
                     let oModel = this.getView().getModel("docModel");
 
+                    if(aSelectedItems.length === 0) 
+                        return MessageBox.error("Please select at least one document to download.");
+
                     aSelectedItems.forEach((element) => {
                         var sPath = element.getBindingContextPath();
                         var docItem = oModel.getProperty(sPath);
@@ -644,6 +647,10 @@ sap.ui.define(
                     //Fetching selected Items from table
                     const oTable = this.byId("idProductsTable");
                     const aSelectedItems = oTable.getSelectedItems();
+                    if(aSelectedItems.length === 0) 
+                        return MessageBox.error("Please select at least one document to delete.");
+                    
+
                     oTable.removeSelections();
                     this.onDeleteFiles(aSelectedItems);
                 },
@@ -730,37 +737,21 @@ sap.ui.define(
                         oDocModel.refresh(true);
                         return;
                     }
-
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        // let RequestId = "000000000085"; // that.getView().getModel("uiModel").getProperty("/RequestId");
-                        // let sUrl="/RequestSet('"+RequestId+"')/Document"
-
-                        const binaryArray = e.target.result;
-                        const blob = new Blob([binaryArray], {
-                            type: oFile.type,
-                        });
-                        const mimeType = oFile.type; // Default to binary if type is not available
-                        const oDocModel = this.getView().getModel("docModel");
-                        var formData = new FormData();
-                        formData.append("file", oFile);
-                        let oData = {
+                    let oData = {
                             FileName: oFile.name,
-                            FileContent: blob,
+                            FileContent: oFile,
                             DocType: docType,
-                            Mimetype: mimeType,
+                            Mimetype:  oFile.type,
                             status: "Draft",
                         };
 
                         aDocuments.push(oData);
-                        oDocModel.refresh(true);
                         if (this._oDialog) {
                             this._oDialog.close();
                         }
-                        this.byId("documentTypeCombobox").setSelectedKey("");
+                        oDocModel.setProperty("/Doc/docType","")
                         this.byId("fileUploader").setValue("");
-                    }.bind(this);
-                    reader.readAsArrayBuffer(oFile);
+
 
                     oDocModel.setProperty("/Doc", {
                         docType: "",
@@ -935,12 +926,6 @@ sap.ui.define(
                     const uploadDocPayloads = [];
                     aDocuments.forEach((element) => {
                         if (element?.status === "Draft") {
-                            let formData = new FormData();
-                            formData.append(
-                                "file",
-                                element.FileContent,
-                                element.FileName
-                            );
                             const oHeaders = {
                                 slug: element.FileName,
                                 "Content-Type": element.Mimetype,
@@ -957,7 +942,7 @@ sap.ui.define(
                                     headers: oHeaders,
                                     processData: false,
                                     contentType: false,
-                                    data: formData,
+                                    data: element.FileContent,
                                     success: function (oData, Response) {
                                         resolve(oData);
                                     },
