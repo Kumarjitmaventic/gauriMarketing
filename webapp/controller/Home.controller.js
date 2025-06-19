@@ -617,7 +617,9 @@ sap.ui.define(
                     if (this._oDialog) {
                         this._oDialog.close();
                     }
+                    const oDocModel = this.getView().getModel("docModel");
                      const docType = oDocModel.getProperty("/Doc/docType");
+                     
                      oDocModel.setProperty("/Doc", {
                         docType: "",
                         Description:""
