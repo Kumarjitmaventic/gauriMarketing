@@ -77,7 +77,7 @@ sap.ui.define(
                             oModel
                         );
 
-                         // Update user info and role in UI model
+                        // Update user info and role in UI model
                         uiModel.setProperty(
                             "/ui/loginUserInfo",
                             oDataResponse || nul
@@ -101,7 +101,7 @@ sap.ui.define(
                         MessageBox.error("Faild to load user information.");
                     }
 
-                     // Get requestId from URL/startup parameters
+                    // Get requestId from URL/startup parameters
                     let requestId = this._getRequestIdFromURL();
 
                     // Fetch request details if requestId exists
@@ -133,7 +133,7 @@ sap.ui.define(
                                     $expand: "Document,Approval",
                                 }
                             );
-                        } 
+                        }
                         // if request details not found return to list page
                         catch (error) {
                             let message = "";
@@ -165,7 +165,7 @@ sap.ui.define(
 
                         if (requestDetails) {
                             // keeping backup
-                            uiModel.setProperty("/backup", JSON.parse(JSON.stringify(requestDetails)) );
+                            uiModel.setProperty("/backup", JSON.parse(JSON.stringify(requestDetails)));
                             uiModel.setProperty(
                                 "/ui/requestStatus",
                                 requestDetails.Status
@@ -192,7 +192,7 @@ sap.ui.define(
                                 "/remarks",
                                 requestDetails?.Remarks
                             );
-                            if(requestDetails.Status === "APR" || requestDetails.Status === "REJ")
+                            if (requestDetails.Status === "APR" || requestDetails.Status === "REJ")
                                 requestModel.setProperty(
                                     "/updatedAt",
                                     requestDetails?.UpdatedAt
@@ -231,7 +231,7 @@ sap.ui.define(
 
                     let oModel = this.getView().getModel("docModel");
 
-                    if(aSelectedItems.length === 0) 
+                    if (aSelectedItems.length === 0)
                         return MessageBox.error("Please select at least one document to download.");
 
                     aSelectedItems.forEach((element) => {
@@ -328,7 +328,7 @@ sap.ui.define(
 
                     oDialog.open();
                 },
-                
+
                 /**
                  * Submits the request by updating its status and refreshing the view.
                  */
@@ -363,9 +363,9 @@ sap.ui.define(
                     }
                 },
 
-                 /**
-                 * Handles delete button press, opens confirmation dialog and deletes request if confirmed.
-                 */
+                /**
+                * Handles delete button press, opens confirmation dialog and deletes request if confirmed.
+                */
                 onPressDelete: function (oEvent) {
                     let oView = this.getView();
                     let uiModel = oView.getModel("uiModel");
@@ -487,9 +487,9 @@ sap.ui.define(
                     oRequestModel.refresh();
                 },
 
-                 /**
-                 * Handles approve/reject button press and opens confirmation dialog.
-                 */
+                /**
+                * Handles approve/reject button press and opens confirmation dialog.
+                */
                 onPressActions: async function (oEvent) {
                     let actionText =
                         oEvent.getSource().getText() == "Approve"
@@ -578,9 +578,9 @@ sap.ui.define(
                 },
 
 
-                 /**
-                 * Cancels the current edit and restores data from backup.
-                 */
+                /**
+                * Cancels the current edit and restores data from backup.
+                */
                 onPressCancel(oEvent) {
                     const oView = this.getView();
                     const oDocModel = oView.getModel("docModel");
@@ -617,7 +617,11 @@ sap.ui.define(
                     if (this._oDialog) {
                         this._oDialog.close();
                     }
-                    this.byId("documentTypeCombobox").setSelectedKey("");
+                     const docType = oDocModel.getProperty("/Doc/docType");
+                     oDocModel.setProperty("/Doc", {
+                        docType: "",
+                        Description:""
+                    });
                     this.byId("fileUploader").setValue("");
                 },
 
@@ -647,18 +651,18 @@ sap.ui.define(
                     //Fetching selected Items from table
                     const oTable = this.byId("idProductsTable");
                     const aSelectedItems = oTable.getSelectedItems();
-                    if(aSelectedItems.length === 0) 
+                    if (aSelectedItems.length === 0)
                         return MessageBox.error("Please select at least one document to delete.");
-                    
+
 
                     oTable.removeSelections();
                     this.onDeleteFiles(aSelectedItems);
                 },
 
-                 /**
-                  * 
-                  * Deletes selected files from the document model.
-                  */
+                /**
+                 * 
+                 * Deletes selected files from the document model.
+                 */
                 onDeleteFiles(aSelectedItems) {
                     if (aSelectedItems.length === 0) {
                         MessageToast.show(
@@ -668,34 +672,34 @@ sap.ui.define(
                     }
 
                     const oModel = this.getView().getModel("docModel");
-                    const uiModel= this.getView().getModel("uiModel");
-                    const mode=uiModel.getProperty("/ui/mode");
+                    const uiModel = this.getView().getModel("uiModel");
+                    const mode = uiModel.getProperty("/ui/mode");
 
-                    
 
-                    
+
+
                     let aDocuments = oModel.getProperty("/Document");
 
-                    const removeIndexMap= {};
-                    let Files=[]
+                    const removeIndexMap = {};
+                    let Files = []
 
                     //Looping through selected items and retrieve the index to be removed
                     aSelectedItems.forEach(element => {
-                        let sPath=element.getBindingContextPath();
-                        let doucment=oModel.getProperty(sPath);
-                        if(mode === "approver" ) {
-                            if(!doucment.DocId){
+                        let sPath = element.getBindingContextPath();
+                        let doucment = oModel.getProperty(sPath);
+                        if (mode === "approver") {
+                            if (!doucment.DocId) {
                                 removeIndexMap[parseInt(
-                                element.getBindingContextPath().split("/").pop(),
-                                10
-                            )] = true;
+                                    element.getBindingContextPath().split("/").pop(),
+                                    10
+                                )] = true;
                             }
-                            else{
+                            else {
                                 Files.push(doucment.FileName);
                             }
 
                         }
-                        else{
+                        else {
                             removeIndexMap[parseInt(
                                 element.getBindingContextPath().split("/").pop(),
                                 10
@@ -703,14 +707,14 @@ sap.ui.define(
                         }
                     });
 
-                    
+
                     aDocuments = aDocuments.filter(
                         (_, idx) => !removeIndexMap[idx]
                     );
 
                     //if files are uploaded by the requester then it cannot be deleted
-                    if(Files && Files.length > 0 && mode === "approver"){
-                        MessageBox.information("'"+Files.join("', '") + "' files cannot be deleted as they are uploaded by the Requester");
+                    if (Files && Files.length > 0 && mode === "approver") {
+                        MessageBox.information("'" + Files.join("', '") + "' files cannot be deleted as they are uploaded by the Requester");
                     }
                     oModel.setProperty("/Document", aDocuments);
                     oModel.refresh(true);
@@ -724,6 +728,7 @@ sap.ui.define(
                     const oFile = oDocModel.getProperty("/Doc/file");
                     const docType = oDocModel.getProperty("/Doc/docType");
                     const aDocuments = oDocModel.getProperty("/Document");
+                    const description = oDocModel.getProperty("/Doc/Description");
 
                     if (!docType) {
                         MessageToast.show("Please select document type");
@@ -738,30 +743,31 @@ sap.ui.define(
                         return;
                     }
                     let oData = {
-                            FileName: oFile.name,
-                            FileContent: oFile,
-                            DocType: docType,
-                            Mimetype:  oFile.type,
-                            status: "Draft",
-                        };
+                        FileName: oFile.name,
+                        FileContent: oFile,
+                        DocType: docType,
+                        Mimetype: oFile.type,
+                        status: "Draft",
+                        Description:description
+                    };
 
-                        aDocuments.push(oData);
-                        if (this._oDialog) {
-                            this._oDialog.close();
-                        }
-                        oDocModel.setProperty("/Doc/docType","")
-                        this.byId("fileUploader").setValue("");
+                    aDocuments.push(oData);
+                    if (this._oDialog) {
+                        this._oDialog.close();
+                    }
+                    this.byId("fileUploader").setValue("");
 
 
                     oDocModel.setProperty("/Doc", {
                         docType: "",
                         fileName: "",
                         file: "",
+                        Description:""
                     });
                     oDocModel.setProperty("/valueState", {
-                        docType: "None",
+                       docType: "None",
                         file: "None",
-                    });
+                    }); 
                     oDocModel.refresh();
                 },
 
@@ -773,6 +779,8 @@ sap.ui.define(
                     let oDocModel = this.getView().getModel("docModel");
                     if (oDocModel.getProperty("/Doc/docType") != "")
                         oDocModel.setProperty("/valueState/docType", "None");
+                    const combTxt = oEvent.getSource().getSelectedItem()?.getProperty("text") || "";
+                    oDocModel.setProperty("/Doc/Description", combTxt);
                 },
 
                 /**
@@ -800,10 +808,10 @@ sap.ui.define(
                     document.body.removeChild(link);
                 },
 
-                 /**
-                 * Saves the request and uploads documents.
-                 * Handles both create and update scenarios.
-                 */
+                /**
+                * Saves the request and uploads documents.
+                * Handles both create and update scenarios.
+                */
                 onPressSave: async function () {
                     const oView = this.getView();
                     oView.setBusy(true);
@@ -907,10 +915,10 @@ sap.ui.define(
                     oView.setBusy(false);
                 },
 
-                 /**
-                 * Uploads all draft documents for the given requestId.
-                 * Returns a promise that resolves when all uploads are complete.
-                 */
+                /**
+                * Uploads all draft documents for the given requestId.
+                * Returns a promise that resolves when all uploads are complete.
+                */
                 uploadDocuments: async function (requestId) {
                     const oView = this.getView();
                     const oModel = oView.getModel();
@@ -930,6 +938,7 @@ sap.ui.define(
                                 slug: element.FileName,
                                 "Content-Type": element.Mimetype,
                                 doctype: element.DocType,
+                                description: element.Description,
                                 "X-CSRF-Token": csrfToken,
                             };
                             const promise = new Promise((resolve, reject) => {
@@ -961,7 +970,7 @@ sap.ui.define(
                     let that = this;
                     let deletedItemPayload = {
                         "RequestId": requestId,
-                        "DocList":[
+                        "DocList": [
 
                         ]
                     };
@@ -971,9 +980,9 @@ sap.ui.define(
                             !currentDocId[item.DocId] &&
                             item.DocId != undefined
                         )
-                            deletedItemPayload.DocList.push({"DocId":item.DocId});
+                            deletedItemPayload.DocList.push({ "DocId": item.DocId });
                     });
-                    uploadDocPayloads.push(that._OdataSyncPostReqSave("/DeletionDocumentSet",oModel,deletedItemPayload));
+                    uploadDocPayloads.push(that._OdataSyncPostReqSave("/DeletionDocumentSet", oModel, deletedItemPayload));
                     try {
                         let responses = await Promise.all(uploadDocPayloads);
                         return responses;
@@ -1057,10 +1066,10 @@ sap.ui.define(
                 },
 
 
-                 /**
-                 * Extracts the RequestId from the startup parameters in the component data.
-                 * Returns the RequestId if present, otherwise returns null.
-                 */
+                /**
+                * Extracts the RequestId from the startup parameters in the component data.
+                * Returns the RequestId if present, otherwise returns null.
+                */
                 _getRequestIdFromURL: function () {
                     let oStartupParameters =
                         this.getOwnerComponent().getComponentData()
@@ -1093,7 +1102,7 @@ sap.ui.define(
                     if (backeup && currentData)
                         return !(
                             backeup?.Remarks ==
-                                currentData?.remarks?.requester &&
+                            currentData?.remarks?.requester &&
                             backeup?.PermitType == currentData?.keyPermitType
                         );
                     return true;
@@ -1139,9 +1148,9 @@ sap.ui.define(
                     });
                 },
 
-                 /**
-                 * Sets default values for the form and document model.
-                 */
+                /**
+                * Sets default values for the form and document model.
+                */
                 _setDefaultValue: function () {
                     const oOwnComp = this.getOwnerComponent() || this.getView();
                     const oDocModel = oOwnComp.getModel("docModel");
@@ -1151,7 +1160,7 @@ sap.ui.define(
                     // setting default value for remarks
                     requestModel.setProperty("/remarks", "");
                     requestModel.setProperty("/keyPermitType", "");
-                    requestModel.setProperty("/updatedAt","");
+                    requestModel.setProperty("/updatedAt", "");
 
                     // clear the value state
                     this.byId("idPermitTypeCombobox").setValueState("None");
@@ -1176,7 +1185,7 @@ sap.ui.define(
                             docType: "None",
                             file: "None",
                         },
-                        fileType:"pdf,xlsx"
+                        fileType: "pdf,xlsx"
                     });
                     oDocModel.refresh(true);
                 },
