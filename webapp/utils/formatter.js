@@ -22,7 +22,8 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function (DateFormat) {
                 CCC: "Charge Cost Center",
                 GEN: "Generated PDF",
                 PAR: "Payment receipt",
-                PEC: "Permit copy"
+                PEC: "Permit copy",
+                OTH : "Others"
             };
             return oMap[sKey] || sKey || ""; // fallback to key or blank
         },
