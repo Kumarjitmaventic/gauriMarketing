@@ -1,0 +1,357 @@
+<mvc:View
+    xmlns:upload="sap.m.upload"
+    xmlns:plugins="sap.m.plugins"
+    controllerName="marketingcampaignreq.zcrmktmarketingcampaign.controller.Home"
+    xmlns:smartForm="sap.ui.comp.smartform"
+    xmlns:smartField="sap.ui.comp.smartfield"
+    height="100%"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:t="sap.ui.table"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:l="sap.ui.layout"
+    xmlns:u="sap.ui.unified"
+    xmlns:ff="sap.f"
+    xmlns="sap.m"
+    xmlns:vm="sap.ui.fl.variants"
+>
+    <Page
+        id="page"
+        title="{
+                    parts: [
+                        
+                        { path: 'uiModel>/ui/requestStatus' },
+                        { path: 'uiModel>/ui/requestId' },
+                        { path: 'requestModel>/updatedAt' }
+                    ],
+                    formatter: '.formatter.getPageTitle'
+                }"
+    >
+        <f:SimpleForm
+            id="SimpleFormChange354wideDual"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            title="Employe Details"
+            labelSpanXL="4"
+            labelSpanL="4"
+            labelSpanM="12"
+            labelSpanS="12"
+            adjustLabelSpan="false"
+            emptySpanXL="0"
+            emptySpanL="0"
+            emptySpanM="0"
+            emptySpanS="0"
+            columnsXL="2"
+            columnsL="2"
+            columnsM="1"
+            singleContainerFullSize="false"
+        >
+            <f:toolbar>
+                <Toolbar visible="{= ${uiModel>/ui/mode} === 'view' || ${uiModel>/ui/mode} === 'approver' || ${uiModel>/ui/mode} === 'draft'}">
+                    <ToolbarSpacer />
+                    <Button
+                            id="DownBt"
+                            text="Download"
+                            press="onPressGenPdf"
+                            visible="{= ${uiModel>/ui/mode} === 'view' ||  ${uiModel>/ui/mode} === 'approver'}"
+                        />
+                        <Button
+                            id="EditBt"
+                            text="Edit"
+                            press="onEditPress"
+                            visible="{= ${uiModel>/ui/mode} === 'draft'}"
+                        />
+                    <Button
+                            id="delteBtn"
+                            text="Delete"
+                            press="onPressDelete"
+                            type="Reject"
+                            visible="{= ${uiModel>/ui/mode} === 'draft'}"
+                        />
+                    
+                </Toolbar>
+            </f:toolbar>
+            <f:content>
+                <core:Title
+                    id="_IDGenTitle1"
+                    text=""
+                />
+                <Label
+                    id="_IDGenLabel"
+                    text="Personal No"
+                />
+                <Input
+                    id="name"
+                    value="{requestModel>/empDetail/Id}"
+                    editable="false"
+                />
+                <Label
+                    id="_IDGenLabel1"
+                    text="Designation"
+                />
+                <Input
+                    id="_IDGenInput"
+                    editable="false"
+                    value="{requestModel>/empDetail/Designation}"
+                />
+                <Label
+                    id="_IDGenLabel2"
+                    text="Grade"
+                />
+                <Input
+                    id="_IDGenInput2"
+                    editable="false"
+                    value="{requestModel>/empDetail/Grade}"
+                />
+                <Label
+                    id="_IDGenLabel3"
+                    text="Cost Center"
+                />
+                <Input
+                    id="_IDGenInput3"
+                    editable="false"
+                    value="{requestModel>/empDetail/CostCenter}"
+                />
+                <core:Title
+                    id="_IDGenTitle2"
+                    text=""
+                />
+                <Label
+                    id="_IDGenLabel4"
+                    text="Employee Name"
+                />
+                <Input
+                    id="_IDGenInput4"
+                    editable="false"
+                    value="{requestModel>/empDetail/Name}"
+                />
+                <Label
+                    id="_IDGenLabel5"
+                    text="Department"
+                />
+                <Input
+                    id="_IDGenInput5"
+                    editable="false"
+                    value="{requestModel>/empDetail/Department}"
+                />
+                <Label
+                    id="_IDGenLabel6"
+                    text="Company Code"
+                />
+                <Input
+                    id="_IDGenInput6"
+                    editable="false"
+                    value="{requestModel>/empDetail/CompanyCode}"
+                />
+            </f:content>
+        </f:SimpleForm>
+        <f:SimpleForm
+            id="SimpleFormChange354wideDual2"
+            editable="true"
+            layout="ResponsiveGridLayout"
+            title="Permit Details"
+            labelSpanXL="4"
+            labelSpanL="4"
+            labelSpanM="12"
+            labelSpanS="12"
+            adjustLabelSpan="false"
+            emptySpanXL="0"
+            emptySpanL="0"
+            emptySpanM="0"
+            emptySpanS="0"
+            columnsXL="2"
+            columnsL="2"
+            columnsM="1"
+            singleContainerFullSize="false"
+        >
+            <f:content>
+                <Label
+                    id="_IDGenLabel10"
+                    text="Permit Type"
+                />
+                <ComboBox
+                    id="idPermitTypeCombobox"
+                    change="onSelectionPermit"
+                    editable="{= ${uiModel>/ui/mode} === 'new' || ${uiModel>/ui/mode}=== 'edit'}"
+                    selectedKey="{requestModel>/keyPermitType}"
+                    required="true"
+                >
+                    <items>
+                        <core:Item
+                            id="_IDGenItem1"
+                            key="SO"
+                            text="Special Offer"
+                        />
+                        <core:Item
+                            id="_IDGenItem2"
+                            key="RD"
+                            text="Raffle Draw"
+                        />
+                        <core:Item
+                            id="_IDGenItem3"
+                            key="SW"
+                            text="Scratch &amp; Win"
+                        />
+                        <core:Item
+                            id="_IDGenItem4"
+                            key="SA"
+                            text="Sales"
+                        />
+                        <core:Item
+                            id="_IDGenItem5"
+                            key="AS"
+                            text="Advertising Stickers"
+                        />
+                    </items>
+                </ComboBox>
+            </f:content>
+        </f:SimpleForm>
+        <f:SimpleForm
+            title="Attachments"
+            singleContainerFullSize="false"
+        >
+            <f:content>
+                <Table
+                    id="idProductsTable"
+                    mode="MultiSelect"
+                    inset="false"
+                    items="{docModel>/Document}"
+                >
+                    <headerToolbar>
+                        <OverflowToolbar>
+                            <content>
+                                <ToolbarSpacer />
+                                <!-- Pushes content to the right -->
+                                <Button
+                                    text="Upload"
+                                    press="onUploadFiles"
+                                    enabled="{= ${uiModel>/ui/mode} === 'new' || ${uiModel>/ui/mode}=== 'edit' || ${uiModel>/ui/mode}=== 'approver'}"
+                                />
+                                <Button
+                                    text="Download"
+                                    press="onDownloadFiles"
+                                />
+                                <Button
+                                    text="Delete"
+                                    press="onDeleteFile"
+                                    enabled="{= ${uiModel>/ui/mode} === 'new' || ${uiModel>/ui/mode}=== 'edit' || ${uiModel>/ui/mode}=== 'approver'}"
+                                />
+                            </content>
+                        </OverflowToolbar>
+                    </headerToolbar>
+                    <columns>
+                        <Column
+                            minScreenWidth="Tablet"
+                            demandPopin="true"
+                        >
+                            <Text text="File Name" />
+                        </Column>
+                        <Column
+                            minScreenWidth="Tablet"
+                            demandPopin="true"
+                        >
+                            <Text text="Document Type" />
+                        </Column>
+                        <Column
+                            minScreenWidth="Tablet"
+                            demandPopin="true"
+                        >
+                            <Text text="Description" />
+                        </Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem vAlign="Middle" >
+                            <cells>
+                                <Text text="{docModel>FileName}" />
+                                <Text text="{path: 'docModel>DocType', formatter: '.formatter.getDocTypeText'}" />
+                                <Text text="{docModel>Description}" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </f:content>
+        </f:SimpleForm>
+        <f:SimpleForm
+            title="Remarks"
+            singleContainerFullSize="true"
+        >
+            <f:content>
+                <TextArea
+                    
+                    id="commentBox"
+                    rows="5"
+                    value="{requestModel>/remarks}"
+                    placeholder="Enter your remarks here..."
+                    editable="{path: 'uiModel>/ui/', formatter: '.formatter.isRemarkeEditableForRequester'}"
+                />
+
+            </f:content>
+        </f:SimpleForm>
+        <!-- <f:SimpleForm
+            title="Approver Note"
+            singleContainerFullSize="true"
+            visible="{= ${uiModel>/ui/requestStatus} === 'APR' || ${uiModel>/ui/requestStatus} === 'REJ'}"
+        >
+            <f:content>
+                <TextArea
+                    id="commentBox1"
+                    rows="5"
+                    value="{requestModel>/approvalNote}"
+                    placeholder="Enter your comment here..."
+                    editable="false"
+                />
+            </f:content>
+        </f:SimpleForm> -->
+        <footer>
+            <OverflowToolbar id="_IDGenOverflowToolbar">
+                <Bar id="_IDGenBar">
+                    <contentRight>
+                        <Button
+                        id="SubBt"
+                        text="Submit Request"
+                        type="Emphasized"
+                        visible="{= ${uiModel>/ui/mode} === 'draft'}"
+                        press="onRequestSubmit"
+                    />
+                    <Button
+                        id="AppBTClear"
+                        text="Clear"
+                        press="onPressClear"
+                        visible="{= ${uiModel>/ui/mode} === 'new'}"
+                    />
+                    <Button
+                        id="SaveBt"
+                        text="{= ${uiModel>/ui/mode} === 'new' ? 'Create' : 'Save'}"
+                        type="Accept"
+                        press="onPressSave"
+                        visible="{= ${uiModel>/ui/mode} === 'new' || ${uiModel>/ui/mode} === 'edit'}"
+                    />
+                    <Button
+                        id="CanBT"
+                        text="Cancel"
+                        press="onPressCancel"
+                        visible="{= ${uiModel>/ui/mode} === 'edit'}"
+                    />
+                    <Button
+                        id="approvalBtn"
+                        text="Approve"
+                        press="onPressActions"
+                        type="Accept"
+                        visible="{= ${uiModel>/ui/mode} === 'approver'}"
+                    />
+                    
+                    <Button
+                        id="rejectBtn"
+                        text="Reject"
+                        press="onPressActions"
+                        type="Reject"
+                        visible="{= ${uiModel>/ui/mode} === 'approver'}"
+                    />
+                    </contentRight>
+                </Bar>
+            </OverflowToolbar>
+        </footer>
+    </Page>
+</mvc:View>
