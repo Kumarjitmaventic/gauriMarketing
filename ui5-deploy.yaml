@@ -2,7 +2,7 @@
 
 specVersion: "3.1"
 metadata:
-  name: marketingcampaign.zcrmktmarketingcampaign
+  name: marketingcampaignreq.zcrmktmarketingcampaign
 type: application
 builder:
   resources:
@@ -16,7 +16,7 @@ builder:
         target:
           url: http://10.10.1.30:8000
         app:
-          name: ZCRM_MKT_CAMP
+          name: ZCRM_MKT_CAMREQ
           package: ZCRM
           transport: E03K929018
         exclude:

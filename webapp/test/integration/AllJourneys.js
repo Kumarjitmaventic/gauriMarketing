@@ -7,7 +7,7 @@ sap.ui.define([
 
 	Opa5.extendConfig({
 		arrangements: new Startup(),
-		viewNamespace: "marketingcampaign.zcrmktmarketingcampaign.view.",
+		viewNamespace: "marketingcampaignreq.zcrmktmarketingcampaign.view.",
 		autoWait: true
 	});
 });

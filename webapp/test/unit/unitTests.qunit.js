@@ -5,7 +5,7 @@ sap.ui.getCore().attachInit(function () {
 	"use strict";
 
 	sap.ui.require([
-		"marketingcampaign/zcrmktmarketingcampaign/test/unit/AllTests"
+		"marketingcampaignreq/zcrmktmarketingcampaign/test/unit/AllTests"
 	], function () {
 		QUnit.start();
 	});
