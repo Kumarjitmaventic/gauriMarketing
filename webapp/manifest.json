@@ -1,7 +1,7 @@
 {
   "_version": "1.53.0",
   "sap.app": {
-    "id": "marketingcampaign.zcrmktmarketingcampaign",
+    "id": "marketingcampaignreq.zcrmktmarketingcampaign",
     "type": "application",
     "i18n": "i18n/i18n.properties",
     "applicationVersion": {
@@ -12,16 +12,14 @@
     "resources": "resources.json",
     "sourceTemplate": {
       "id": "@sap/generator-fiori:basic",
-      "version": "1.17.5",
-      "toolsId": "79f0f50e-d5ef-4622-aec6-15f6975e943b"
+      "version": "1.18.0",
+      "toolsId": "f9d2140b-8eb5-46ee-b6ac-923175a9988e"
     },
     "dataSources": {
       "mainService": {
         "uri": "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/",
         "type": "OData",
-
         "settings": {
-          
           "annotations": [],
           "localUri": "localService/mainService/metadata.xml",
           "odataVersion": "2.0"
@@ -30,10 +28,10 @@
     },
     "crossNavigation": {
       "inbounds": {
-        "ZMKTCAMP-Display": {
+        "ZMKTCAMP-create": {
           "semanticObject": "ZMKTCAMP",
-          "action": "Display",
-          "title": "{{ZMKTCAMP-Display.flpTitle}}",
+          "action": "create",
+          "title": "{{ZMKTCAMP-create.flpTitle}}",
           "signature": {
             "parameters": {},
             "additionalParameters": "allowed"
@@ -43,7 +41,6 @@
     }
   },
   "sap.ui": {
-    "fullWidth": true,
     "technology": "UI5",
     "icons": {
       "icon": "",
@@ -60,7 +57,7 @@
     }
   },
   "sap.ui5": {
-    "flexEnabled": false,
+    "flexEnabled": true,
     "dependencies": {
       "minUI5Version": "1.114.0",
       "libs": {
@@ -76,7 +73,7 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "marketingcampaign.zcrmktmarketingcampaign.i18n.i18n"
+          "bundleName": "marketingcampaignreq.zcrmktmarketingcampaign.i18n.i18n"
         }
       },
       "": {
@@ -85,9 +82,6 @@
         "settings": {}
       },
       "docModel": {
-        "type": "sap.ui.model.json.JSONModel"
-      },
-      "empModel": {
         "type": "sap.ui.model.json.JSONModel"
       },
       "requestModel": {
@@ -109,7 +103,7 @@
         "routerClass": "sap.m.routing.Router",
         "viewType": "XML",
         "async": true,
-        "viewPath": "marketingcampaign.zcrmktmarketingcampaign.view",
+        "viewPath": "marketingcampaignreq.zcrmktmarketingcampaign.view",
         "controlAggregation": "pages",
         "controlId": "app",
         "clearControlAggregation": false
@@ -117,14 +111,7 @@
       "routes": [
         {
           "name": "RouteHome",
-          "pattern": ":RequestId:",
-          "target": [
-            "TargetHome"
-          ]
-        },
-         {
-          "name": "RouteHome2",
-          "pattern": "/{RequestId}",
+          "pattern": ":?query:",
           "target": [
             "TargetHome"
           ]
@@ -141,7 +128,7 @@
       }
     },
     "rootView": {
-      "viewName": "marketingcampaign.zcrmktmarketingcampaign.view.App",
+      "viewName": "marketingcampaignreq.zcrmktmarketingcampaign.view.App",
       "type": "XML",
       "async": true,
       "id": "App"
