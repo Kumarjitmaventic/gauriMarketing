@@ -941,12 +941,10 @@ sap.ui.define(
                         description: element.Description,
                         "X-CSRF-Token": csrfToken,
                     };
+                    let URL = `/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/RequestSet('${requestId}')/Document?saml2=disabled`;
                     const promise = new Promise((resolve, reject) => {
                         $.ajax({
-                            url:
-                                "/sap/opu/odata/sap/ZCRM_MKT_MARKETING_CAMPAIGN_SRV/RequestSet('" +
-                                requestId +
-                                "')/Document",
+                            url: URL,
                             type: "POST",
                             headers: oHeaders,
                             processData: false,
@@ -982,7 +980,9 @@ sap.ui.define(
                 )
                     deletedItemPayload.DocList.push({ "DocId": item.DocId });
             });
-            uploadDocPayloads.push(that._OdataSyncPostReqSave("/DeletionDocumentSet", oModel, deletedItemPayload));
+            if(deletedItemPayload?.DocList?.length > 0)
+                uploadDocPayloads.push(that._OdataSyncPostReqSave("/DeletionDocumentSet", oModel, deletedItemPayload));
+
             try {
                 let responses = await Promise.all(uploadDocPayloads);
                 return responses;
