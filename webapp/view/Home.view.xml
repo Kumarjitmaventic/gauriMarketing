@@ -52,23 +52,24 @@
                 <Toolbar visible="{= ${uiModel>/ui/mode} === 'view' || ${uiModel>/ui/mode} === 'approver' || ${uiModel>/ui/mode} === 'draft'}">
                     <ToolbarSpacer />
                     <Button
-                            id="DownBt"
-                            text="Download"
-                            press="onPressGenPdf"
-                            visible="{= ${uiModel>/ui/mode} === 'view' ||  ${uiModel>/ui/mode} === 'approver'}"
-                        />
-                        <Button
                             id="EditBt"
                             text="Edit"
                             press="onEditPress"
                             visible="{= ${uiModel>/ui/mode} === 'draft'}"
                         />
                     <Button
+                            id="DownBt"
+                            text="Download"
+                            press="onPressGenPdf"
+                            visible="{= ${uiModel>/ui/mode} === 'view' ||  ${uiModel>/ui/mode} === 'approver' || ${uiModel>/ui/requestStatus} === 'CFR'}"
+                        />
+                        
+                    <Button
                             id="delteBtn"
                             text="Delete"
                             press="onPressDelete"
                             type="Reject"
-                            visible="{= ${uiModel>/ui/mode} === 'draft'}"
+                            visible="{path: 'uiModel>/ui', formatter: '.formatter.isDeleteButtonVisiable'}"
                         />
                     
                 </Toolbar>
@@ -309,10 +310,10 @@
                 <Bar id="_IDGenBar">
                     <contentRight>
                         <Button
-                        id="SubBt"
-                        text="Submit Request"
+                        id="submitBtn"
+                        text="{= ${uiModel>/ui/requestStatus} === 'CFR' ? 'Clarification Provided' : 'Submit Request'}"
                         type="Emphasized"
-                        visible="{= ${uiModel>/ui/mode} === 'draft'}"
+                        visible="{path: 'uiModel>/ui', formatter: '.formatter.isSubmitBtnVisiable'}"
                         press="onRequestSubmit"
                     />
                     <Button
@@ -341,13 +342,30 @@
                         type="Accept"
                         visible="{= ${uiModel>/ui/mode} === 'approver'}"
                     />
+
+                    <Button
+                        id="clarificationReqBtn"
+                        text="Clarification Required"
+                        press="onPressActions"
+                        type="Attention"
+                        visible="{= ${uiModel>/ui/mode} === 'approver'}"
+                    />
+
+                    <Button
+                        id="clarificationProvBtn"
+                        text="Clarification Provider"
+                        press="onPressActions"
+                        type="Emphasized"
+                        visible="{path: 'uiModel>/ui', formatter: '.formatter.isClarificationProvBtnVisiable'}"
+                    />
+                    
                     
                     <Button
                         id="rejectBtn"
                         text="Reject"
                         press="onPressActions"
                         type="Reject"
-                        visible="{= ${uiModel>/ui/mode} === 'approver'}"
+                        visible="{path: 'uiModel>/ui', formatter: '.formatter.isRejectBtnVisiable'}"
                     />
                     </contentRight>
                 </Bar>
