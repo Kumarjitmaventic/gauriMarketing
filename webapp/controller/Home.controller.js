@@ -212,18 +212,32 @@ sap.ui.define(
                                 requestDetails?.Document?.results || []
                             );
 
-                            // fetch data for requester
-                            let employeDetails = await this._OdataSynceRead(
-                                `/UserSet('${requestDetails?.RequesterId}')`,
-                                oModel
+                            requestModel.setProperty(
+                                "/empDetail",
+                                {
+                                    CompanyCode: requestDetails.CompanyCode,
+                                    CostCenter: requestDetails.CostCenter,
+                                    Department: requestDetails.Department,
+                                    Designation: requestDetails.Designation,
+                                    Grade: requestDetails.Grade,
+                                    Name: requestDetails.Name,
+                                    Role: requestDetails.Role,
+                                    Id: requestDetails.RequesterId
+                                }
                             );
-                            if (employeDetails) {
-                                requestModel.setProperty(
-                                    "/empDetail",
-                                    employeDetails
-                                );
-                                requestModel.refresh();
-                            }
+
+                            // // fetch data for requester
+                            // let employeDetails = await this._OdataSynceRead(
+                            //     `/UserSet('${requestDetails?.RequesterId}')`,
+                            //     oModel
+                            // );
+                            // if (employeDetails) {
+                            //     requestModel.setProperty(
+                            //         "/empDetail",
+                            //         employeDetails
+                            //     );
+                            //     requestModel.refresh();
+                            // }
                         }
                     }
                 },
@@ -477,7 +491,7 @@ sap.ui.define(
                                 );
 
                             if (actionResponse) {
-                                
+
                                 MessageToast.show(message.success);
                                 oUiModel.setProperty(
                                     "/ui/requestStatus",
@@ -648,11 +662,10 @@ sap.ui.define(
                                 width: "100%",
                                 height: "120px",
                                 maxLength: 255,
-                                placeholder: `Decision note (${
-                                    actionType === "Approve"
+                                placeholder: `Decision note (${actionType === "Approve"
                                         ? "Optional"
                                         : "Required"
-                                })`,
+                                    })`,
                                 valueState: sap.ui.core.ValueState.None,
                             }),
                         ],
@@ -856,8 +869,8 @@ sap.ui.define(
                     if (Files && Files.length > 0 && mode === "approver") {
                         MessageBox.information(
                             "'" +
-                                Files.join("', '") +
-                                "' files cannot be deleted as they are uploaded by the Requester"
+                            Files.join("', '") +
+                            "' files cannot be deleted as they are uploaded by the Requester"
                         );
                     }
                     oModel.setProperty("/Document", aDocuments);
@@ -1255,7 +1268,7 @@ sap.ui.define(
                     if (backeup && currentData)
                         return !(
                             backeup?.Remarks ==
-                                currentData?.remarks?.requester &&
+                            currentData?.remarks?.requester &&
                             backeup?.PermitType == currentData?.keyPermitType
                         );
                     return true;
