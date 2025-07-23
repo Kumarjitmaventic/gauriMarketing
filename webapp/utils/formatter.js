@@ -35,9 +35,9 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function (DateFormat) {
             return uiModel?.mode === "draft" && uiModel?.requestStatus != "CFR";
         },
         isRejectBtnVisiable: function (uiModel) {
-            if(uiModel?.mode === "approver" && uiModel?.role == "Approver" && uiModel?.requestStatus != "PGS")
+            if(uiModel?.mode === "approver" && uiModel?.role == "Approver" && uiModel?.requestStatus == "PGS")
                 return true;
-            else if(uiModel?.mode != "new" && uiModel?.role == "Requester" && uiModel?.requestStatus == "CFR")
+            else if(uiModel?.mode != "new" && uiModel?.mode != "edit" && uiModel?.role == "Requester" && uiModel?.requestStatus == "CFR")
                 return true;
             else return false;
             // return uiModel?.mode === "view" && uiModel?.requestStatus != "CFR";
